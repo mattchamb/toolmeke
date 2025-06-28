@@ -1,4 +1,4 @@
-baseURL = 'https://toolmeke.example.org/'
+baseURL = 'https://toolmeke.nz/'
 languageCode = 'en-nz'
 title = 'ToolMeke - Independent Tool Price Comparison'
 theme = 'ananke'
