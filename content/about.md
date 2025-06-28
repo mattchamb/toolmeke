@@ -3,8 +3,6 @@ title: "About ToolMeke"
 description: "Learn about ToolMeke - an independent tool price comparison project for New Zealand"
 ---
 
-# About ToolMeke
-
 ## What is ToolMeke?
 
 ToolMeke is a **completely independent** tool price comparison website created as a personal side project. Our mission is simple: help New Zealand DIY enthusiasts and tradies find better deals on tools by comparing prices across major hardware stores.
@@ -25,11 +23,6 @@ As tool enthusiasts ourselves, we were frustrated by having to visit multiple st
 - No affiliate links, no commission fees, no kickbacks
 - This project is funded entirely out of our own pocket
 
-### 🤝 Community Focused
-- Built by tool enthusiasts, for tool enthusiasts
-- We're part of the New Zealand DIY and trades community
-- Our goal is simply to help fellow Kiwis save money on tools
-
 ## How It Works
 
 1. **Data Collection**: We automatically gather pricing data from various New Zealand hardware store websites
@@ -41,10 +34,6 @@ As tool enthusiasts ourselves, we were frustrated by having to visit multiple st
 - **Always verify prices**: While we strive for accuracy, prices can change quickly. Always check the retailer's website for current pricing
 - **No guarantees**: We don't guarantee price accuracy or availability
 - **For comparison only**: Our data is intended for comparison purposes to help guide your purchasing decisions
-
-## Contact & Feedback
-
-This is a labour of love project, and we're always looking to improve. If you have suggestions, spot errors, or just want to say hello, feel free to reach out through our contact channels.
 
 ---
 

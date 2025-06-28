@@ -11,24 +11,6 @@ COMBINED_OUTPUT_FILE="$SCRIPT_DATA_DIR/tools.json"
 # Create script data directory if it doesn't exist
 mkdir -p "$SCRIPT_DATA_DIR"
 
-# Function to fetch Bunnings# Fetch data from selected stores - commented out for now to not keep refetching
-# for store in "${STORES_TO_FETCH[@]}"; do
-#     case "$store" in
-#         "bunnings")
-#             fetch_bunnings_data
-#             ;;
-#         "mitre10")
-#             fetch_mitre10_data
-#             ;;
-#         "placemakers")
-#             fetch_placemakers_data
-#             ;;
-#         *)
-#             echo "Warning: Unknown store '$store'. Supported stores: bunnings, mitre10, placemakers"
-#             ;;
-#     esac
-# done
-
 # Function to fetch Bunnings data
 fetch_bunnings_data() {
     local output_file="$SCRIPT_DATA_DIR/bunnings_tools.json"
@@ -382,7 +364,7 @@ echo "Will fetch data from stores: ${STORES_TO_FETCH[*]}"
 #             fetch_mitre10_data
 #             ;;
 #         "placemakers")
-             fetch_placemakers_data
+#             fetch_placemakers_data
 #             ;;
 #         *)
 #             echo "Warning: Unknown store '$store'. Supported stores: bunnings, mitre10, placemakers"
@@ -394,7 +376,4 @@ echo "Will fetch data from stores: ${STORES_TO_FETCH[*]}"
 combine_store_data
 
 echo "Multi-store data aggregation complete!"
-
-
-
 

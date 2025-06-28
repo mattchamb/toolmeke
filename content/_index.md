@@ -12,13 +12,6 @@ An **independent tool price comparison** project for New Zealand DIY enthusiasts
 
 We collect and compare tool prices from various New Zealand retailers to help you make informed purchasing decisions. Our data is gathered through automated price checking and presented here for your convenience.
 
-## 🏪 Featured Brands
-
-Browse tools by your favorite brands to compare prices across different stores.
-
-## 🔍 Start Browsing
-
-Ready to find your next tool? Browse our catalog to see current price comparisons.
 
 ---
 
