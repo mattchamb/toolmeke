@@ -1,0 +1,1 @@
+We use minimal javaScript in our Hugo site, so Copilot should not suggest JavaScript code. Instead, focus on providing HTML and Go templates that integrate with Hugo's templating system.
