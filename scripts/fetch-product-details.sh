@@ -45,6 +45,27 @@ parse_mitre10_product() {
                                '. + { modelNumber: $model_number }'
 }
 
+# Function to parse Placemakers product page
+parse_placemakers_product() {
+    local html_content="$1"
+    local original_data="$2"
+    
+    # Check if model number already exists in the data (from initial scraping)
+    local existing_model_number=$(echo "$original_data" | jq -r '.modelNumber // ""')
+    
+    if [ -n "$existing_model_number" ] && [ "$existing_model_number" != "null" ] && [ "$existing_model_number" != "" ]; then
+        # Model number already exists, just return the original data
+        echo "$original_data"
+    else
+        # Try to extract model number from the page if it wasn't captured initially
+        local model_number=$(echo "$html_content" | pup 'div.partCode text{}' 2>/dev/null | sed 's/^Part Code: //' | tr -d '\n' || echo "")
+        
+        # Return original data with parsed fields
+        echo "$original_data" | jq -c --arg model_number "$model_number" \
+                                   '. + { modelNumber: $model_number }'
+    fi
+}
+
 # Function to fetch and parse a single product
 fetch_product_details() {
     local tool_data="$1"
@@ -80,6 +101,9 @@ fetch_product_details() {
             ;;
         "mitre10")
             parsed_data=$(parse_mitre10_product "$html_content" "$tool_data")
+            ;;
+        "placemakers")
+            parsed_data=$(parse_placemakers_product "$html_content" "$tool_data")
             ;;
         *)
             echo "  Warning: Unknown store type '$store'" >&2

@@ -11,6 +11,24 @@ COMBINED_OUTPUT_FILE="$SCRIPT_DATA_DIR/tools.json"
 # Create script data directory if it doesn't exist
 mkdir -p "$SCRIPT_DATA_DIR"
 
+# Function to fetch Bunnings# Fetch data from selected stores - commented out for now to not keep refetching
+# for store in "${STORES_TO_FETCH[@]}"; do
+#     case "$store" in
+#         "bunnings")
+#             fetch_bunnings_data
+#             ;;
+#         "mitre10")
+#             fetch_mitre10_data
+#             ;;
+#         "placemakers")
+#             fetch_placemakers_data
+#             ;;
+#         *)
+#             echo "Warning: Unknown store '$store'. Supported stores: bunnings, mitre10, placemakers"
+#             ;;
+#     esac
+# done
+
 # Function to fetch Bunnings data
 fetch_bunnings_data() {
     local output_file="$SCRIPT_DATA_DIR/bunnings_tools.json"
@@ -125,6 +143,139 @@ fetch_mitre10_data() {
     echo "Mitre10 output saved to: $output_file"
 }
 
+# Function to fetch Placemakers data
+fetch_placemakers_data() {
+    local output_file="$SCRIPT_DATA_DIR/placemakers_tools.json"
+    echo "Fetching Placemakers data..."
+    
+    # Initialize empty file for results
+    > "$output_file"
+    
+    local base_url="https://www.placemakers.co.nz/online/tools/c/RCC3?q=%3Atitle%2Basc%3Acategory%3ARWCO1%3Abrand%3AHiKOKI%3Abrand%3AMakita%3Abrand%3AMilwaukee%3Abrand%3ADEWALT"
+    local page=0
+    local total_items=0
+    
+    while true; do
+        echo "  Fetching Placemakers page $page..."
+        
+        # Construct URL with current page number
+        local url="${base_url}&page=${page}"
+        
+        # Fetch data and check if we have product items
+        local html_content=$(curl -s "$url" 2>/dev/null || echo "")
+        
+        if [ -z "$html_content" ]; then
+            echo "  Failed to fetch Placemakers page $page"
+            break
+        fi
+        
+        # Use improved extraction for all products
+        local temp_file=$(mktemp)
+        echo "$html_content" > "$temp_file"
+        
+        # Get the total number of products
+        local product_count=$(pup 'div.product-item' < "$temp_file" | grep -c 'class="product-item"')
+        
+        if [ "$product_count" -eq 0 ]; then
+            echo "  No products found on Placemakers page $page. Finished."
+            rm -f "$temp_file"
+            break
+        fi
+        
+        echo "  Found $product_count products on page $page"
+        
+        # Process all products
+        for i in $(seq 1 $product_count); do
+            # Get the product HTML
+            local product_html=$(pup "div.product-item:nth-child($i)" < "$temp_file")
+            if [ -z "$product_html" ]; then
+                continue
+            fi
+            
+            # Create temp file for this product
+            local product_file=$(mktemp)
+            echo "$product_html" > "$product_file"
+            
+            # Extract data with improved whitespace handling
+            local brand=$(pup 'div.manufacturer text{}' < "$product_file" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            local name=$(pup 'a.name text{}' < "$product_file" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            local url=$(pup 'a.name attr{href}' < "$product_file" | tr -d '\n\r')
+            local part_code=$(pup 'div.partCode text{}' < "$product_file" | sed 's/Part Code: //' | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            
+            # Try to get price with multiple fallback methods
+            local price=$(pup 'div.price.bottomSpace text{}' < "$product_file" | grep -o '\$[0-9,]*\.[0-9]*' | sed 's/\$//;s/,//' | head -1)
+            if [ -z "$price" ]; then
+                price=$(pup 'button[data-product-price] attr{data-product-price}' < "$product_file" | head -1)
+            fi
+            if [ -z "$price" ]; then
+                price=$(pup 'input.productPostPrice attr{value}' < "$product_file" | head -1)
+            fi
+            
+            rm -f "$product_file"
+            
+            # Skip if missing essential data
+            if [ -z "$brand" ] || [ -z "$name" ]; then
+                continue
+            fi
+            
+            # Normalize brand names
+            case "$(echo "$brand" | tr '[:upper:]' '[:lower:]')" in
+                "dewalt") brand="DEWALT" ;;
+                "milwaukee") brand="Milwaukee" ;;
+                "hikoki") brand="HiKOKI" ;;
+            esac
+            
+            # Make URL absolute
+            if [ -n "$url" ] && [[ ! "$url" =~ ^https?:// ]]; then
+                url="https://www.placemakers.co.nz$url"
+            fi
+            
+            # Output JSON
+            jq -nc \
+                --arg brand "$brand" \
+                --arg name "$name" \
+                --arg model_number "$part_code" \
+                --arg url "$url" \
+                --arg price "$price" \
+                '{
+                    toolBrand: $brand,
+                    name: $name,
+                    modelNumber: $model_number,
+                    price: {
+                        rrp: (if $price != "" then ($price | tonumber) else null end),
+                        promo: null
+                    },
+                    url: $url,
+                    store: "placemakers"
+                }' >> "$output_file"
+        done
+        
+        rm -f "$temp_file"
+        
+        # Count how many lines were added to the file
+        local current_total=$(wc -l < "$output_file" 2>/dev/null || echo 0)
+        local page_count=$((current_total - total_items))
+        
+        if [ "$page_count" -eq 0 ]; then
+            echo "  No valid products extracted from Placemakers page $page. Finished."
+            break
+        fi
+        
+        # Update total count
+        total_items=$current_total
+        echo "  Placemakers page $page complete. Items on this page: $page_count. Total items so far: $total_items"
+        
+        # Increment page counter
+        ((page++))
+        
+        # Small delay to be respectful to the server
+        sleep 1
+    done
+    
+    echo "Placemakers data collection complete! Total items: $total_items"
+    echo "Placemakers output saved to: $output_file"
+}
+
 # Function to combine all store data
 combine_store_data() {
     echo "Combining data from all stores..."
@@ -172,6 +323,24 @@ combine_store_data() {
                         store: .store
                     }
                 ' "$store_file" >> "$COMBINED_OUTPUT_FILE"
+            elif [[ "$store_file" == *"placemakers"* ]]; then
+                # Process Placemakers data: data is already in the correct format with model numbers
+                jq -c '
+                    {
+                        toolBrand: (
+                            if (.toolBrand | ascii_downcase) == "dewalt" then "DEWALT"
+                            elif (.toolBrand | ascii_downcase) == "milwaukee" then "Milwaukee"
+                            elif (.toolBrand | ascii_downcase) == "hikoki" then "HiKOKI"
+                            else .toolBrand
+                            end
+                        ),
+                        name: .name,
+                        modelNumber: .modelNumber,
+                        price: .price,
+                        url: .url,
+                        store: .store
+                    }
+                ' "$store_file" >> "$COMBINED_OUTPUT_FILE"
             else
                 echo "    Warning: Unknown store type in file $(basename "$store_file"), skipping..."
             fi
@@ -195,7 +364,7 @@ echo "Starting multi-store data aggregation..."
 STORES_TO_FETCH=()
 if [ $# -eq 0 ]; then
     # Default to all stores if no arguments provided
-    STORES_TO_FETCH=("bunnings" "mitre10")
+    STORES_TO_FETCH=("bunnings" "mitre10" "placemakers")
 else
     # Use provided store arguments
     STORES_TO_FETCH=("$@")
@@ -212,8 +381,11 @@ echo "Will fetch data from stores: ${STORES_TO_FETCH[*]}"
 #         "mitre10")
 #             fetch_mitre10_data
 #             ;;
+#         "placemakers")
+             fetch_placemakers_data
+#             ;;
 #         *)
-#             echo "Warning: Unknown store '$store'. Supported stores: bunnings, mitre10"
+#             echo "Warning: Unknown store '$store'. Supported stores: bunnings, mitre10, placemakers"
 #             ;;
 #     esac
 # done

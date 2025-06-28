@@ -13,7 +13,7 @@
   {{ end }}
   
   {{ if $tool }}
-    
+
   {{/* Tool Header */}}
   <div class="mb4">
     <h1 class="f2 fw6 mt0 mb3">{{ $tool.name }}</h1>
@@ -43,8 +43,12 @@
     <div class="mb3 pa3 bg-light-gray br3">
       <p class="f5 mv0">
         <strong>Available at {{ $tool.storeCount }} store{{ if ne $tool.storeCount 1 }}s{{ end }}</strong>
-        {{ if gt $tool.storeCount 1 }}
+        {{ if and (gt $tool.storeCount 1) $tool.priceRange.min $tool.priceRange.max }}
           | <strong>Price Range:</strong> {{ $tool.priceRange.min | printf "$%.2f" }} - {{ $tool.priceRange.max | printf "$%.2f" }}
+        {{ else if and (gt $tool.storeCount 1) $tool.priceRange.min }}
+          | <strong>Price:</strong> {{ $tool.priceRange.min | printf "$%.2f" }}
+        {{ else if and (gt $tool.storeCount 1) $tool.priceRange.max }}
+          | <strong>Price:</strong> {{ $tool.priceRange.max | printf "$%.2f" }}
         {{ end }}
       </p>
     </div>
@@ -85,12 +89,20 @@
     <h3 class="f4 fw6 mb3">Price Comparison</h3>
     <div class="bg-light-yellow pa3 br3">
       <div class="f5">
-        <strong>Best Price:</strong> {{ $tool.priceRange.min | printf "$%.2f" }}
-        {{ if ne $tool.priceRange.min $tool.priceRange.max }}
-          <br>
-          <strong>Highest Price:</strong> {{ $tool.priceRange.max | printf "$%.2f" }}
-          <br>
-          <strong>You could save:</strong> {{ sub $tool.priceRange.max $tool.priceRange.min | printf "$%.2f" }} by choosing the best deal
+        {{ if and $tool.priceRange.min $tool.priceRange.max }}
+          <strong>Best Price:</strong> {{ $tool.priceRange.min | printf "$%.2f" }}
+          {{ if ne $tool.priceRange.min $tool.priceRange.max }}
+            <br>
+            <strong>Highest Price:</strong> {{ $tool.priceRange.max | printf "$%.2f" }}
+            <br>
+            <strong>You could save:</strong> {{ sub $tool.priceRange.max $tool.priceRange.min | printf "$%.2f" }} by choosing the best deal
+          {{ end }}
+        {{ else if $tool.priceRange.min }}
+          <strong>Price:</strong> {{ $tool.priceRange.min | printf "$%.2f" }}
+        {{ else if $tool.priceRange.max }}
+          <strong>Price:</strong> {{ $tool.priceRange.max | printf "$%.2f" }}
+        {{ else }}
+          <strong>Pricing information not available</strong>
         {{ end }}
       </div>
     </div>
