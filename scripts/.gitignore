@@ -1,0 +1,4 @@
+# Ignore working data files
+data/
+*.json
+*.txt

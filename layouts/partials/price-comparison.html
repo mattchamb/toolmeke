@@ -1,0 +1,31 @@
+<!-- Price Comparison Component -->
+<div class="price-comparison">
+  <div class="f6 mb2">
+    <strong>Available at {{ .storeCount }} store{{ if ne .storeCount 1 }}s{{ end }}</strong>
+  </div>
+  
+  {{ range .stores }}
+  <div class="mb2 pa2 bg-light-blue br2">
+    <div class="f6 fw6 mb1">{{ .store | title }}</div>
+    <div class="f5 fw6">
+      {{ if .price.promo }}
+        <span class="green">{{ .price.promo | printf "$%.2f" }}</span>
+        <span class="gray strike f6 ml1">{{ .price.rrp | printf "$%.2f" }}</span>
+        <span class="f6 green ml2">SALE</span>
+      {{ else }}
+        {{ .price.rrp | printf "$%.2f" }}
+      {{ end }}
+    </div>
+    <a href="{{ .url }}" target="_blank" class="f6 link dim blue">View at {{ .store | title }} →</a>
+  </div>
+  {{ end }}
+  
+  {{ if gt .storeCount 1 }}
+  <div class="mt2 f6 pa2 bg-light-gray br2">
+    <strong>Price Range:</strong> {{ .priceRange.min | printf "$%.2f" }} - {{ .priceRange.max | printf "$%.2f" }}
+    {{ if ne .priceRange.min .priceRange.max }}
+    <br><strong>Savings:</strong> Up to {{ sub .priceRange.max .priceRange.min | printf "$%.2f" }}
+    {{ end }}
+  </div>
+  {{ end }}
+</div>

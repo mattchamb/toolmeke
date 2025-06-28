@@ -1,0 +1,116 @@
+{{ define "header" }}{{ partials.Include "site-header.html" .}}{{ end }}
+
+{{ define "main" }}
+<!-- Content Section -->
+<div class="bg-near-white pv4 ph3">
+  <article class="cf ph3 ph5-l pv3 pv4-l f4 tc center measure-wide lh-copy dark-gray">
+    {{ .Content }}
+  </article>
+</div>
+
+<!-- Site Statistics -->
+<div class="mw9 center ph3 ph4-l pv5">
+  <h2 class="f2 fw6 mb4 tc dark-gray">Current Database</h2>
+  <div class="cf">
+    <div class="fl w-100 w-25-l pa3 tc">
+      <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
+        <div class="w3 h3 br-100 bg-blue center mb3 flex items-center justify-center">
+          <span class="f4 white">🔧</span>
+        </div>
+        <h3 class="f2 fw6 mv0 dark-gray">{{ .Site.Data.stats.totalTools }}</h3>
+        <p class="f6 mid-gray mv1">Tools Tracked</p>
+      </div>
+    </div>
+    <div class="fl w-100 w-25-l pa3 tc">
+      <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
+        <div class="w3 h3 br-100 bg-green center mb3 flex items-center justify-center">
+          <span class="f4 white">🏭</span>
+        </div>
+        <h3 class="f2 fw6 mv0 dark-gray">{{ .Site.Data.stats.totalBrands }}</h3>
+        <p class="f6 mid-gray mv1">Brands</p>
+      </div>
+    </div>
+    <div class="fl w-100 w-25-l pa3 tc">
+      <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
+        <div class="w3 h3 br-100 bg-orange center mb3 flex items-center justify-center">
+          <span class="f4 white">🏪</span>
+        </div>
+        <h3 class="f2 fw6 mv0 dark-gray">{{ .Site.Data.stats.totalStores }}</h3>
+        <p class="f6 mid-gray mv1">Stores</p>
+      </div>
+    </div>
+    <div class="fl w-100 w-25-l pa3 tc">
+      <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
+        <div class="w3 h3 br-100 bg-dark-gray center mb3 flex items-center justify-center">
+          <span class="f4 white">📅</span>
+        </div>
+        <h3 class="f4 fw6 mv0 dark-gray">{{ .Site.Data.stats.lastUpdated }}</h3>
+        <p class="f6 mid-gray mv1">Last Updated</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Brands -->
+<div class="bg-light-gray pv5">
+  <div class="mw9 center ph3 ph4-l">
+    <h2 class="f2 fw6 mb4 tc dark-gray">Popular Brands</h2>
+    <p class="f5 mid-gray tc mb4 measure center">Compare prices across different retailers for these popular tool brands</p>
+    <div class="cf">
+      {{ range first 6 .Site.Data.brands }}
+      <div class="fl w-100 w-50-m w-33-l pa3">
+        <div class="bg-white ba b--light-gray br3 pa4 tc hover-bg-near-white shadow-2 hover-shadow-3 transition-all">
+          <h3 class="f3 fw6 mv0">
+            <a href="/brands/{{ .slug }}/" class="no-underline dark-gray hover-blue">{{ .name }}</a>
+          </h3>
+          <p class="f6 mid-gray mv2">{{ .toolCount }} tools available</p>
+          <a href="/brands/{{ .slug }}/" class="f6 link dim br3 ph3 pv2 mb2 dib white bg-blue hover-bg-dark-blue">Browse Tools</a>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+    
+    <div class="tc mt4">
+      <a href="/brands/" class="f5 link dim br3 ph4 pv3 mb2 dib white bg-dark-gray hover-bg-gray">View All Brands</a>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="mw8 center ph3 ph4-l pv5">
+  <h2 class="f2 fw6 mb4 tc dark-gray">Start Your Search</h2>
+  <div class="cf">
+    <div class="fl w-100 w-50-l pa3">
+      <div class="bg-white ba b--blue br3 pa4 tc shadow-2 hover-shadow-3 transition-all">
+        <div class="f1 mb3 blue">🔍</div>
+        <h3 class="f3 fw6 mv0 dark-gray">Browse by Brand</h3>
+        <p class="f6 mv2 mid-gray">Find tools from your favorite manufacturer and compare prices</p>
+        <a href="/brands/" class="f6 link dim br3 ph3 pv2 mb2 dib white bg-blue hover-bg-dark-blue">View Brands</a>
+      </div>
+    </div>
+    <div class="fl w-100 w-50-l pa3">
+      <div class="bg-white ba b--green br3 pa4 tc shadow-2 hover-shadow-3 transition-all">
+        <div class="f1 mb3 green">📦</div>
+        <h3 class="f3 fw6 mv0 dark-gray">Browse All Tools</h3>
+        <p class="f6 mv2 mid-gray">Explore our complete catalog of tools and accessories</p>
+        <a href="/tools/" class="f6 link dim br3 ph3 pv2 mb2 dib white bg-green hover-bg-dark-green">View Tools</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Disclaimer Section -->
+<div class="bg-near-white bt b--light-gray pv4">
+  <div class="mw7 center ph3 ph4-l tc">
+    <div class="bg-white ba b--light-gray br3 pa4">
+      <h3 class="f4 fw6 mv0 mb3 dark-gray">Independent & Unbiased</h3>
+      <p class="f6 gray lh-copy measure center mv0">
+        ToolMeke is a personal side project created to help the NZ tool community find better deals. 
+        We have <strong>no affiliations</strong> with any stores or manufacturers, and we don't earn 
+        commissions from purchases. This is purely a helpful resource built by tool enthusiasts, for tool enthusiasts.
+      </p>
+    </div>
+  </div>
+</div>
+
+{{ end }}

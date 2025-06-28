@@ -4,12 +4,13 @@ set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-DATA_DIR="$PROJECT_ROOT/data"
-TOOLS_INPUT_FILE="$DATA_DIR/tools.json"
-DETAILED_OUTPUT_FILE="$DATA_DIR/tools_detailed.json"
+SCRIPT_DATA_DIR="$SCRIPT_DIR/data"
+HUGO_DATA_DIR="$PROJECT_ROOT/data"
+TOOLS_INPUT_FILE="$SCRIPT_DATA_DIR/tools.json"
+DETAILED_OUTPUT_FILE="$SCRIPT_DATA_DIR/tools_detailed.json"
 
-# Create data directory if it doesn't exist
-mkdir -p "$DATA_DIR"
+# Create script data directory if it doesn't exist
+mkdir -p "$SCRIPT_DATA_DIR"
 
 # Check if tools.json exists
 if [ ! -f "$TOOLS_INPUT_FILE" ]; then
@@ -35,13 +36,13 @@ parse_mitre10_product() {
     local html_content="$1"
     local original_data="$2"
     
-    # TODO: Implement Mitre10-specific parsing logic
-    # Extract model number, description, specifications, availability, etc.
+    # Extract model number from the span with class "product--model-number hidden-xs hidden-sm"
+    # Use a simpler approach since pup might not handle :not() well
+    local model_number=$(echo "$html_content" | pup 'span.product--model-number text{}' 2>/dev/null | grep "^MODEL:" | head -1 | sed 's/^MODEL: //' | tr -d '\n' || echo "")
     
-    # For now, just return original data with empty parsed fields
-    echo "$original_data" | jq -c '. + {
-        modelNumber: ""
-    }'
+    # Return original data with parsed fields
+    echo "$original_data" | jq -c --arg model_number "$model_number" \
+                               '. + { modelNumber: $model_number }'
 }
 
 # Function to fetch and parse a single product
@@ -125,7 +126,7 @@ process_all_tools() {
         echo "  Progress: $current/$total_tools (successful: $successful, failed: $failed)" >&2
         
         # Add a small delay to be respectful to the servers
-        sleep 2
+        #sleep 1
         
     done < "$TOOLS_INPUT_FILE"
     
@@ -170,7 +171,7 @@ process_sample_tools() {
         echo "  Progress: $current/$sample_size (successful: $successful, failed: $failed)" >&2
         
         # Add a small delay to be respectful to the servers
-        sleep 2
+        # sleep 1
         
     done < "$TOOLS_INPUT_FILE"
     

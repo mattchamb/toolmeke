@@ -1,0 +1,69 @@
+{{ define "main" }}
+<article class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy mid-gray">
+  {{ .Content }}
+</article>
+
+<div class="mw9 center ph3 ph4-l">
+  <div class="mb4 pa3 bg-light-gray br3">
+    <p class="f5 mv0">
+      <strong>{{ len .Site.Data.tools }} tools</strong> available across all brands
+    </p>
+  </div>
+
+  <div class="cf">
+    {{ range first 50 .Site.Data.tools }}
+    <div class="fl w-100 pa3">
+      <div class="bg-white ba b--light-gray br3 pa4 hover-bg-light-gray">
+        <div class="cf">
+          <div class="fl w-100 w-70-l">
+            <h3 class="f4 fw6 mt0 mb2">
+              <a href="/tools/{{ .modelNumber | urlize }}/" class="no-underline dark-gray">{{ .baseName }}</a>
+            </h3>
+            <p class="f6 gray mv1">Brand: <strong>{{ .toolBrand }}</strong> | Model: {{ .modelNumber }}</p>
+            <div class="f6 gray mv1">
+              Categories: 
+              {{ range $i, $cat := .categories }}
+                {{ if $i }}, {{ end }}
+                <span class="ba b--light-gray br2 ph2 pv1">{{ $cat }}</span>
+              {{ end }}
+            </div>
+          </div>
+          <div class="fl w-100 w-30-l pl3-l">
+            <div class="f6 mb2">
+              <strong>Available at {{ .storeCount }} store{{ if ne .storeCount 1 }}s{{ end }}</strong>
+            </div>
+            {{ range .stores }}
+            <div class="mb2 pa2 bg-light-blue br2">
+              <div class="f6 fw6 mb1">{{ .store | title }}</div>
+              <div class="f5 fw6">
+                {{ if .price.promo }}
+                  <span class="green">{{ .price.promo | printf "$%.0f" }}</span>
+                  <span class="gray strike f6 ml1">{{ .price.rrp | printf "$%.0f" }}</span>
+                {{ else }}
+                  {{ .price.rrp | printf "$%.0f" }}
+                {{ end }}
+              </div>
+              <a href="{{ .url }}" target="_blank" class="f6 link dim blue">View at {{ .store | title }} →</a>
+            </div>
+            {{ end }}
+            
+            {{ if gt .storeCount 1 }}
+            <div class="mt2 f6">
+              <strong>Price Range:</strong> {{ .priceRange.min | printf "$%.0f" }} - {{ .priceRange.max | printf "$%.0f" }}
+            </div>
+            {{ end }}
+          </div>
+        </div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+  
+  {{ if gt (len .Site.Data.tools) 50 }}
+  <div class="tc mt4 pa3 bg-light-gray br3">
+    <p class="f6 mv0">Showing first 50 tools. More tools will be added in future updates.</p>
+  </div>
+  {{ end }}
+</div>
+
+{{ end }}

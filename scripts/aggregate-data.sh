@@ -4,15 +4,16 @@ set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-DATA_DIR="$PROJECT_ROOT/data"
-COMBINED_OUTPUT_FILE="$DATA_DIR/tools.json"
+SCRIPT_DATA_DIR="$SCRIPT_DIR/data"
+HUGO_DATA_DIR="$PROJECT_ROOT/data"
+COMBINED_OUTPUT_FILE="$SCRIPT_DATA_DIR/tools.json"
 
-# Create data directory if it doesn't exist
-mkdir -p "$DATA_DIR"
+# Create script data directory if it doesn't exist
+mkdir -p "$SCRIPT_DATA_DIR"
 
 # Function to fetch Bunnings data
 fetch_bunnings_data() {
-    local output_file="$DATA_DIR/bunnings_tools.json"
+    local output_file="$SCRIPT_DATA_DIR/bunnings_tools.json"
     echo "Fetching Bunnings data..."
     
     # Initialize empty file for results
@@ -58,7 +59,7 @@ fetch_bunnings_data() {
 
 # Function to fetch Mitre10 data
 fetch_mitre10_data() {
-    local output_file="$DATA_DIR/mitre10_tools.json"
+    local output_file="$SCRIPT_DATA_DIR/mitre10_tools.json"
     echo "Fetching Mitre10 data..."
     
     # Initialize empty file for results
@@ -132,7 +133,7 @@ combine_store_data() {
     > "$COMBINED_OUTPUT_FILE"
     
     # Process each store file and extract only required fields
-    for store_file in "$DATA_DIR"/*_tools.json; do
+    for store_file in "$SCRIPT_DATA_DIR"/*_tools.json; do
         if [ -f "$store_file" ]; then
             echo "  Processing and filtering data from $(basename "$store_file")..."
             
@@ -168,6 +169,12 @@ combine_store_data() {
     local total_combined=$(wc -l < "$COMBINED_OUTPUT_FILE" 2>/dev/null || echo 0)
     echo "Combined data complete! Total items across all stores: $total_combined"
     echo "Combined output saved to: $COMBINED_OUTPUT_FILE"
+    
+    # Copy to Hugo data directory
+    echo "Copying combined data to Hugo data directory..."
+    mkdir -p "$HUGO_DATA_DIR"
+    cp "$COMBINED_OUTPUT_FILE" "$HUGO_DATA_DIR/tools.json"
+    echo "Copied to Hugo data directory: $HUGO_DATA_DIR/tools.json"
 }
 
 echo "Starting multi-store data aggregation..."

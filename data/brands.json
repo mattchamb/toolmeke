@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Makita",
+    "slug": "makita",
+    "toolCount": 490
+  },
+  {
+    "name": "Bosch Professional",
+    "slug": "bosch-professional",
+    "toolCount": 318
+  },
+  {
+    "name": "DEWALT",
+    "slug": "dewalt",
+    "toolCount": 191
+  },
+  {
+    "name": "DeWALT",
+    "slug": "dewalt",
+    "toolCount": 190
+  },
+  {
+    "name": "HiKOKI",
+    "slug": "hikoki",
+    "toolCount": 169
+  },
+  {
+    "name": "AEG",
+    "slug": "aeg",
+    "toolCount": 99
+  },
+  {
+    "name": "Makita XGT",
+    "slug": "makita-xgt",
+    "toolCount": 63
+  },
+  {
+    "name": "Bosch",
+    "slug": "bosch",
+    "toolCount": 48
+  },
+  {
+    "name": "Makita LXT",
+    "slug": "makita-lxt",
+    "toolCount": 15
+  }
+]

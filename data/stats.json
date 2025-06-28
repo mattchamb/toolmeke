@@ -1,0 +1,21 @@
+{
+  "totalTools": 1347,
+  "totalBrands": 9,
+  "totalStores": 2,
+  "brands": [
+    "AEG",
+    "Bosch",
+    "Bosch Professional",
+    "DeWALT",
+    "DEWALT",
+    "HiKOKI",
+    "Makita",
+    "Makita LXT",
+    "Makita XGT"
+  ],
+  "stores": [
+    "bunnings",
+    "mitre10"
+  ],
+  "lastUpdated": "2025-06-28"
+}
