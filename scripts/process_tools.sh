@@ -38,9 +38,16 @@ jq -r '.[].toolBrand' "$OUTPUT_DIR/tools_raw.json" | sort -u > "$OUTPUT_DIR/bran
 echo "Extracting stores..."
 jq -r '.[].store' "$OUTPUT_DIR/tools_raw.json" | sort -u > "$OUTPUT_DIR/stores_list.txt"
 
-# Step 4: Create brands JSON
+# Step 4: Create brands JSON with normalization
 echo "Creating brands data..."
-jq -r '.[].toolBrand' "$OUTPUT_DIR/tools_raw.json" | sort | uniq -c | sort -nr | \
+jq -r '
+.[].toolBrand | 
+if . == "Makita LXT" or . == "Makita XGT" then "Makita"
+elif . == "Bosch Professional" then "Bosch"  
+elif (. | ascii_downcase) == "dewalt" then "DEWALT"
+else . 
+end
+' "$OUTPUT_DIR/tools_raw.json" | sort | uniq -c | sort -nr | \
 while read count brand; do
     slug=$(echo "$brand" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g' | sed 's/&/and/g')
     echo "{\"name\":\"$brand\",\"slug\":\"$slug\",\"toolCount\":$count}"
@@ -49,10 +56,17 @@ done | jq -s '.' > "$OUTPUT_DIR/brands.json"
 # Step 5: Group tools by model number and create aggregated data
 echo "Grouping tools by model number..."
 jq '
+map(select(.modelNumber != "")) |
 group_by(.modelNumber) | 
 map({
   modelNumber: .[0].modelNumber,
-  toolBrand: .[0].toolBrand,
+  toolBrand: (
+    if .[0].toolBrand == "Makita LXT" or .[0].toolBrand == "Makita XGT" then "Makita"
+    elif .[0].toolBrand == "Bosch Professional" then "Bosch"
+    elif (.[0].toolBrand | ascii_downcase) == "dewalt" then "DEWALT"
+    else .[0].toolBrand
+    end
+  ),
   name: .[0].name,
   stores: map({
     store: .store,
@@ -86,14 +100,32 @@ map({
 sort_by(.name)
 ' "$OUTPUT_DIR/tools_raw.json" > "$OUTPUT_DIR/tools_processed.json"
 
-# Step 6: Create individual brand files
+# Step 6: Extract unique brands (normalized)
+echo "Extracting brands..."
+jq -r '
+.[].toolBrand | 
+if . == "Makita LXT" or . == "Makita XGT" then "Makita"
+elif . == "Bosch Professional" then "Bosch"  
+elif (. | ascii_downcase) == "dewalt" then "DEWALT"
+else . 
+end
+' "$OUTPUT_DIR/tools_raw.json" | sort -u > "$OUTPUT_DIR/brands_list.txt"
+
+# Step 7: Create individual brand files
 echo "Creating individual brand files..."
-while read brand; do
+jq -r '
+.[].toolBrand | 
+if . == "Makita LXT" or . == "Makita XGT" then "Makita"
+elif . == "Bosch Professional" then "Bosch"  
+elif (. | ascii_downcase) == "dewalt" then "DEWALT"
+else . 
+end
+' "$OUTPUT_DIR/tools_processed.json" | sort -u | while read brand; do
     slug=$(echo "$brand" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g' | sed 's/&/and/g')
     jq --arg brand "$brand" '[.[] | select(.toolBrand == $brand)]' "$OUTPUT_DIR/tools_processed.json" > "$OUTPUT_DIR/brand_$slug.json"
-done < "$OUTPUT_DIR/brands_list.txt"
+done
 
-# Step 7: Create summary statistics
+# Step 8: Create summary statistics
 echo "Creating summary statistics..."
 total_tools=$(jq 'length' "$OUTPUT_DIR/tools_processed.json")
 total_brands=$(wc -l < "$OUTPUT_DIR/brands_list.txt")
@@ -118,7 +150,7 @@ jq -n \
     lastUpdated: "2025-06-28"
   }' > "$OUTPUT_DIR/stats.json"
 
-# Step 8: Create Hugo-ready data files (copy to Hugo data directory)
+# Step 9: Create Hugo-ready data files (copy to Hugo data directory)
 echo "Creating Hugo data files..."
 
 # Ensure Hugo data directory exists

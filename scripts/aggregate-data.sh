@@ -139,10 +139,16 @@ combine_store_data() {
             
             # Determine store type from filename
             if [[ "$store_file" == *"bunnings"* ]]; then
-                # Process Bunnings data: extract name, price, URL, and store
+                # Process Bunnings data: extract name, price, URL, and store with brand normalization
                 jq -c '
                     {
-                        toolBrand: .raw.brandname,
+                        toolBrand: (
+                            if .raw.brandname == "Makita LXT" or .raw.brandname == "Makita XGT" then "Makita"
+                            elif .raw.brandname == "Bosch Professional" then "Bosch"
+                            elif (.raw.brandname | ascii_downcase) == "dewalt" then "DEWALT"
+                            else .raw.brandname
+                            end
+                        ),
                         name: (.title // .Title),
                         price: { rrp: .raw.price, promo: null },
                         url: ("https://www.bunnings.co.nz" + .raw.productroutingurl),
@@ -150,10 +156,16 @@ combine_store_data() {
                     }
                 ' "$store_file" >> "$COMBINED_OUTPUT_FILE"
             elif [[ "$store_file" == *"mitre10"* ]]; then
-                # Process Mitre10 data: extract name, price (prefer promo over RRP), URL, and store
+                # Process Mitre10 data: extract name, price (prefer promo over RRP), URL, and store with brand normalization
                 jq -c '
                     {
-                        toolBrand: .brandName,
+                        toolBrand: (
+                            if .brandName == "Makita LXT" or .brandName == "Makita XGT" then "Makita"
+                            elif .brandName == "Bosch Professional" then "Bosch"
+                            elif (.brandName | ascii_downcase) == "dewalt" then "DEWALT"
+                            else .brandName
+                            end
+                        ),
                         name: .name,
                         price: { rrp: .prices.nationalRRP, promo: .prices.nationalPromo },
                         url: ("https://www.mitre10.co.nz" + .url),

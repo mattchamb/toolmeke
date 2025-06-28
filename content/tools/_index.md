@@ -1,8 +1,6 @@
 ---
-title: "All Tools"
-description: "Browse all available tools"
+title: "Tools"
+description: "Browse all tools"
+featured_image: nils-rasmusson-wynkDtIrGlI-unsplash.jpg
 ---
 
-# All Tools
-
-Browse our complete catalog of tools with price comparisons across stores.

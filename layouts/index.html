@@ -1,9 +1,7 @@
-{{ define "header" }}{{ partials.Include "site-header.html" .}}{{ end }}
-
 {{ define "main" }}
-<!-- Content Section -->
-<div class="bg-near-white pv4 ph3">
-  <article class="cf ph3 ph5-l pv3 pv4-l f4 tc center measure-wide lh-copy dark-gray">
+<!-- Hero Section -->
+<div class="bg-dark-gray white pv5 ph3">
+  <article class="cf ph3 ph5-l pv3 pv4-l f4 tc center measure-wide lh-copy">
     {{ .Content }}
   </article>
 </div>
@@ -99,18 +97,5 @@
   </div>
 </div>
 
-<!-- Disclaimer Section -->
-<div class="bg-near-white bt b--light-gray pv4">
-  <div class="mw7 center ph3 ph4-l tc">
-    <div class="bg-white ba b--light-gray br3 pa4">
-      <h3 class="f4 fw6 mv0 mb3 dark-gray">Independent & Unbiased</h3>
-      <p class="f6 gray lh-copy measure center mv0">
-        ToolMeke is a personal side project created to help the NZ tool community find better deals. 
-        We have <strong>no affiliations</strong> with any stores or manufacturers, and we don't earn 
-        commissions from purchases. This is purely a helpful resource built by tool enthusiasts, for tool enthusiasts.
-      </p>
-    </div>
-  </div>
-</div>
 
 {{ end }}

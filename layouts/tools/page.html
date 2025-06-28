@@ -1,0 +1,114 @@
+{{ define "main" }}
+
+<div class="mw8 center ph3 ph4-l pv4">
+  {{ $toolSlug := .Params.slug }}
+  {{ $allTools := .Site.Data.tools }}
+  {{ $tool := "" }}
+  
+  {{/* Find the specific tool by model number */}}
+  {{ range $allTools }}
+    {{ if eq ($toolSlug) (.modelNumber | urlize) }}
+      {{ $tool = . }}
+    {{ end }}
+  {{ end }}
+  
+  {{ if $tool }}
+    
+  {{/* Tool Header */}}
+  <div class="mb4">
+    <h1 class="f2 fw6 mt0 mb3">{{ $tool.name }}</h1>
+    <div class="f5 text-medium-contrast mb3">
+      <strong>Brand:</strong> 
+      <a href="/brands/{{ $tool.toolBrand | lower | urlize }}/" class="link blue dim">{{ $tool.toolBrand }}</a>
+    </div>
+    <div class="f5 text-medium-contrast mb3">
+      <strong>Model Number:</strong> {{ $tool.modelNumber }}
+    </div>
+    
+    {{/* Categories */}}
+    {{ if $tool.categories }}
+    <div class="f5 text-medium-contrast mb3">
+      <strong>Categories:</strong>
+      {{ range $i, $cat := $tool.categories }}
+        {{ if $i }}, {{ end }}
+        <span class="ba b--light-gray br2 ph2 pv1 bg-light-blue">{{ $cat }}</span>
+      {{ end }}
+    </div>
+    {{ end }}
+  </div>
+  
+  {{/* Store Availability */}}
+  <div class="mb4">
+    <h2 class="f3 fw6 mb3">Store Availability</h2>
+    <div class="mb3 pa3 bg-light-gray br3">
+      <p class="f5 mv0">
+        <strong>Available at {{ $tool.storeCount }} store{{ if ne $tool.storeCount 1 }}s{{ end }}</strong>
+        {{ if gt $tool.storeCount 1 }}
+          | <strong>Price Range:</strong> {{ $tool.priceRange.min | printf "$%.2f" }} - {{ $tool.priceRange.max | printf "$%.2f" }}
+        {{ end }}
+      </p>
+    </div>
+    
+    {{/* Store listings */}}
+    <div class="cf">
+      {{ range $tool.stores }}
+      <div class="fl w-100 w-50-l pa2">
+        <div class="bg-white ba b--light-gray br3 pa4 hover-bg-light-gray h-100">
+          <div class="f4 fw6 mb2 text-high-contrast">{{ .store | title }}</div>
+          
+          {{/* Price display */}}
+          <div class="f3 fw6 mb3">
+            {{ if .price.promo }}
+              <span class="green">{{ .price.promo | printf "$%.2f" }}</span>
+              <div class="f5 gray strike">{{ .price.rrp | printf "$%.2f" }}</div>
+              <div class="f6 green">Sale Price!</div>
+            {{ else }}
+              <span class="text-high-contrast">{{ .price.rrp | printf "$%.2f" }}</span>
+            {{ end }}
+          </div>
+          
+          {{/* Store link */}}
+          <div class="mt3">
+            <a href="{{ .url }}" target="_blank" class="f5 link dim white bg-dark-blue br2 ph3 pv2 dib">
+              View at {{ .store | title }} →
+            </a>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+  
+  {{/* Price comparison summary */}}
+  {{ if gt $tool.storeCount 1 }}
+  <div class="mb4">
+    <h3 class="f4 fw6 mb3">Price Comparison</h3>
+    <div class="bg-light-yellow pa3 br3">
+      <div class="f5">
+        <strong>Best Price:</strong> {{ $tool.priceRange.min | printf "$%.2f" }}
+        {{ if ne $tool.priceRange.min $tool.priceRange.max }}
+          <br>
+          <strong>Highest Price:</strong> {{ $tool.priceRange.max | printf "$%.2f" }}
+          <br>
+          <strong>You could save:</strong> {{ sub $tool.priceRange.max $tool.priceRange.min | printf "$%.2f" }} by choosing the best deal
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+  
+  {{ else }}
+  {{/* Tool not found */}}
+  <div class="mb4">
+    <a href="/tools/" class="f6 link dim br2 ph3 pv2 mb2 dib white bg-dark-blue">← Back to All Tools</a>
+  </div>
+  
+  <div class="pa4 bg-light-red br3">
+    <h1 class="f3 fw6 mt0 mb2">Tool Not Found</h1>
+    <p class="f5 mv0">Sorry, we couldn't find information for this tool. It may have been removed or the link may be incorrect.</p>
+  </div>
+  {{ end }}
+  
+</div>
+
+{{ end }}

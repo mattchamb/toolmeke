@@ -1,10 +1,7 @@
 {{ define "main" }}
-<article class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy text-high-contrast">
-  {{ .Content }}
-</article>
 
 <div class="mw9 center ph3 ph4-l">
-  {{ $brandSlug := .Params.brand }}
+  {{ $brandSlug := .Params.slug }}
   {{ $brandData := index .Site.Data (printf "brand_%s" $brandSlug) }}
   
   {{ if $brandData }}
