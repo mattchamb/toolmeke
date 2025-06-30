@@ -1,0 +1,93 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  featured_image?: string;
+}
+
+const { title = "ToolMeke - Independent Tool Price Comparison", description = "Independent tool price comparison across New Zealand hardware stores - no affiliations, just helpful data", featured_image } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-nz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {featured_image && <meta property="og:image" content={featured_image} />}
+    
+    <!-- Tachyons CSS for styling -->
+    <link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
+  </head>
+  <body class="sans-serif">
+    <!-- Navigation -->
+    <nav class="pv3 ph3 ph4-ns bg-dark-gray white" role="navigation">
+      <div class="flex-l center items-center justify-between">
+        <a href="/" class="f3 fw2 hover-white white no-underline">
+          ToolMeke
+        </a>
+        <div class="flex-l items-center">
+          <ul class="pl0 mr3 list">
+            <li class="list f5 f4-ns fw4 dib pr3">
+              <a class="hover-white white no-underline" href="/" title="Home">
+                Home
+              </a>
+            </li>
+            <li class="list f5 f4-ns fw4 dib pr3">
+              <a class="hover-white white no-underline" href="/brands/" title="Brands">
+                Brands
+              </a>
+            </li>
+            <li class="list f5 f4-ns fw4 dib pr3">
+              <a class="hover-white white no-underline" href="/tools/" title="Tools">
+                Tools
+              </a>
+            </li>
+            <li class="list f5 f4-ns fw4 dib pr3">
+              <a class="hover-white white no-underline" href="/about/" title="About">
+                About
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main>
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-gray white pv4 ph3">
+      <div class="mw9 center">
+        <div class="tc">
+          <p class="f6 mid-gray">
+            ToolMeke is an independent project with no affiliation to any hardware stores or manufacturers.
+          </p>
+          <p class="f6 mid-gray">
+            We don't earn commissions from purchases - this is purely a helpful resource for the NZ tool community.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  /* Custom styles for transitions */
+  .transition-all {
+    transition: all 0.15s ease-in-out;
+  }
+  
+  .hover-shadow-3:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,.2);
+  }
+  
+  .shadow-2 {
+    box-shadow: 0 4px 8px rgba(0,0,0,.12);
+  }
+</style>

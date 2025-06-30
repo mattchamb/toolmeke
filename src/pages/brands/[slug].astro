@@ -1,0 +1,64 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import brands from '../../data/brands.json';
+
+export async function getStaticPaths() {
+  return brands.map((brand) => ({
+    params: { slug: brand.slug },
+    props: { brand }
+  }));
+}
+
+const { brand } = Astro.props;
+
+// Load brand-specific tool data
+let tools = [];
+try {
+  const brandData = await import(`../../data/brand_${brand.slug}.json`);
+  tools = brandData.default || [];
+} catch (error) {
+  console.warn(`Could not load data for brand: ${brand.slug}`);
+}
+
+const title = `${brand.name} Tools - ToolMeke`;
+const description = `Compare prices for ${brand.name} tools across New Zealand hardware stores`;
+---
+
+<Layout title={title} description={description}>
+  <div class="mw9 center ph3 ph4-l pv5">
+    <div class="mb5">
+      <h1 class="f1 fw6 mb3 dark-gray">{brand.name} Tools</h1>
+      <p class="f4 mid-gray mb4">
+        Compare prices for {brand.name} tools across New Zealand hardware stores
+      </p>
+      <div class="flex items-center mb4">
+        <span class="f6 fw6 dark-gray mr2">Total Tools:</span>
+        <span class="f6 mid-gray">{brand.toolCount}</span>
+      </div>
+    </div>
+
+    {tools.length > 0 ? (
+      <div class="cf">
+        {tools.slice(0, 50).map((tool) => (
+          <div class="fl w-100 w-50-m w-33-l pa3">
+            <ToolCard tool={tool} />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="tc pv5">
+        <p class="f4 mid-gray">No tools data available for {brand.name} at the moment.</p>
+        <p class="f5 mid-gray">Please check back later for updated pricing information.</p>
+      </div>
+    )}
+
+    {tools.length > 50 && (
+      <div class="tc mt5">
+        <p class="f5 mid-gray">
+          Showing first 50 tools. Total available: {brand.toolCount}
+        </p>
+      </div>
+    )}
+  </div>
+</Layout>

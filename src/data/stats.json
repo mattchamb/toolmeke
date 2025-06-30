@@ -1,0 +1,19 @@
+{
+  "totalTools": 1956,
+  "totalBrands": 6,
+  "totalStores": 3,
+  "brands": [
+    "AEG",
+    "Bosch",
+    "DEWALT",
+    "HiKOKI",
+    "Makita",
+    "Milwaukee"
+  ],
+  "stores": [
+    "bunnings",
+    "mitre10",
+    "placemakers"
+  ],
+  "lastUpdated": "2025-06-28"
+}

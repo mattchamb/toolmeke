@@ -1,0 +1,49 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import stats from '../../data/stats.json';
+
+const title = "All Tools - ToolMeke";
+const description = "Browse all tools and compare prices across New Zealand hardware stores";
+---
+
+<Layout title={title} description={description}>
+  <div class="mw9 center ph3 ph4-l pv5">
+    <h1 class="f1 fw6 mb4 tc dark-gray">All Tools</h1>
+    <p class="f4 mid-gray tc mb5 measure center">
+      Browse our complete database of {stats.totalTools} tools across {stats.totalBrands} brands
+    </p>
+    
+    <div class="tc pv5">
+      <h2 class="f2 fw6 mb4 dark-gray">Browse by Brand</h2>
+      <p class="f4 mid-gray mb4">
+        To view our complete tool database, please browse by brand:
+      </p>
+      <a href="/brands/" class="f4 link dim br3 ph4 pv3 dib white bg-blue hover-bg-dark-blue">
+        View All Brands
+      </a>
+    </div>
+
+    <!-- Featured categories could be added here in the future -->
+    <div class="bg-light-gray br3 pa4 mt5">
+      <h3 class="f3 fw6 mb3 dark-gray">Database Stats</h3>
+      <div class="cf">
+        <div class="fl w-100 w-25-l pa2 tc">
+          <div class="f2 fw6 dark-gray">{stats.totalTools}</div>
+          <div class="f6 mid-gray">Total Tools</div>
+        </div>
+        <div class="fl w-100 w-25-l pa2 tc">
+          <div class="f2 fw6 dark-gray">{stats.totalBrands}</div>
+          <div class="f6 mid-gray">Brands</div>
+        </div>
+        <div class="fl w-100 w-25-l pa2 tc">
+          <div class="f2 fw6 dark-gray">{stats.totalStores}</div>
+          <div class="f6 mid-gray">Stores</div>
+        </div>
+        <div class="fl w-100 w-25-l pa2 tc">
+          <div class="f4 fw6 dark-gray">{stats.lastUpdated}</div>
+          <div class="f6 mid-gray">Last Updated</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
