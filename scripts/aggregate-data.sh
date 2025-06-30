@@ -133,7 +133,7 @@ fetch_placemakers_data() {
     # Initialize empty file for results
     > "$output_file"
     
-    local base_url="https://www.placemakers.co.nz/online/tools/c/RCC3?q=%3Atitle%2Basc%3Acategory%3ARWCO1%3Abrand%3AHiKOKI%3Abrand%3AMakita%3Abrand%3AMilwaukee%3Abrand%3ADEWALT"
+    local base_url="https://www.placemakers.co.nz/online/tools/c/RCC3?q=%3Atitle%2Basc%3Acategory%3ARWCO1%3Abrand%3AHiKOKI%3Abrand%3AMakita%3Abrand%3AMilwaukee%3Abrand%3ADEWALT%3Abrand%3ADeWalt%3Abrand%3APaslode%3Abrand%3ANilfisk%3Abrand%3ABosch%3Abrand%3AHIKOKI"
     local page=0
     local total_items=0
     
