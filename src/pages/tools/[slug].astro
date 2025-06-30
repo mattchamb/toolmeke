@@ -1,0 +1,148 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import tools from '../../data/tools.json';
+
+export async function getStaticPaths() {
+  return tools.map((tool) => ({
+    params: { slug: tool.modelNumber.toLowerCase().replace(/[^a-z0-9-]/g, '-') },
+    props: { tool }
+  }));
+}
+
+const { tool } = Astro.props;
+
+const title = `${tool.name} - ToolMeke`;
+const description = `Compare prices for ${tool.name} (${tool.modelNumber}) across New Zealand hardware stores. Available from ${tool.storeCount} store${tool.storeCount !== 1 ? 's' : ''}.`;
+
+// Sort stores by price (lowest first)
+const sortedStores = tool.stores.sort((a, b) => a.effectivePrice - b.effectivePrice);
+---
+
+<Layout title={title} description={description}>
+  <section class="section">
+    <div class="container">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb mb-5" aria-label="breadcrumbs">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/tools/">Tools</a></li>
+          <li><a href={`/brands/${tool.toolBrand.toLowerCase()}/`}>{tool.toolBrand}</a></li>
+          <li class="is-active"><a href="#" aria-current="page">{tool.modelNumber}</a></li>
+        </ul>
+      </nav>
+
+      <div class="columns">
+        <div class="column is-8">
+          <div class="box">
+            <h1 class="title is-2 has-text-dark mb-3">{tool.name}</h1>
+            
+            <div class="is-flex is-align-items-center mb-4">
+              <span class="tag is-primary is-medium mr-3">{tool.toolBrand}</span>
+              <span class="is-size-6 has-text-grey">Model: {tool.modelNumber}</span>
+            </div>
+
+            {tool.categories && tool.categories.length > 0 && (
+              <div class="mb-4">
+                <span class="is-size-6 has-text-weight-semibold has-text-dark mr-2">Categories:</span>
+                <div class="tags is-inline">
+                  {tool.categories.map((category) => (
+                    <span class="tag is-light">
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div class="box has-background-light">
+              <h2 class="title is-4 has-text-dark mb-4">Price Comparison</h2>
+              
+              <div class="columns is-mobile mb-4">
+                <div class="column">
+                  <div class="has-text-centered">
+                    <div class="title is-3 has-text-success">
+                      ${tool.priceRange?.min?.toFixed(2) || 'N/A'}
+                    </div>
+                    <div class="is-size-6 has-text-grey">Best Price</div>
+                  </div>
+                </div>
+                {tool.priceRange?.min !== tool.priceRange?.max && tool.priceRange?.max && (
+                  <div class="column">
+                    <div class="has-text-centered">
+                      <div class="title is-3 has-text-dark">
+                        ${tool.priceRange.max.toFixed(2)}
+                      </div>
+                      <div class="is-size-6 has-text-grey">Highest Price</div>
+                    </div>
+                  </div>
+                )}
+                <div class="column">
+                  <div class="has-text-centered">
+                    <div class="title is-3 has-text-primary">
+                      {tool.storeCount}
+                    </div>
+                    <div class="is-size-6 has-text-grey">Store{tool.storeCount !== 1 ? 's' : ''}</div>
+                  </div>
+                </div>
+              </div>
+
+              {tool.priceRange?.min && tool.priceRange?.max && tool.priceRange.min !== tool.priceRange.max && (
+                <div class="notification is-info is-light">
+                  <strong>Save ${(tool.priceRange.max - tool.priceRange.min).toFixed(2)}</strong> by choosing the best price!
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-4">
+          <div class="box">
+            <h2 class="title is-4 has-text-dark mb-4">Available At</h2>
+            
+            <div class="content">
+              {sortedStores.map((store, index) => (
+                <div class="box" style={index === 0 ? "border: 2px solid #00d1b2;" : ""}>
+                  {index === 0 && (
+                    <div class="tag is-success is-small mb-2">Best Price</div>
+                  )}
+                  
+                  <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                    <div>
+                      <div class="title is-5 has-text-dark is-capitalized">{store.store}</div>
+                      <div class="title is-4 has-text-success">${store.effectivePrice?.toFixed(2) || 'N/A'}</div>
+                      {store.price?.promo && store.price?.promo !== store.price?.rrp && (
+                        <div>
+                          <span class="tag is-warning is-small">On Sale</span>
+                          <div class="is-size-7 has-text-grey">
+                            RRP: <span style="text-decoration: line-through;">${store.price.rrp?.toFixed(2) || 'N/A'}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <a 
+                    href={store.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="button is-primary is-fullwidth"
+                  >
+                    View at {store.store.charAt(0).toUpperCase() + store.store.slice(1)}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Similar Tools Section -->
+          <div class="box">
+            <h3 class="title is-5 has-text-dark mb-4">More {tool.toolBrand} Tools</h3>
+            <a href={`/brands/${tool.toolBrand.toLowerCase()}/`} class="button is-primary is-fullwidth">
+              View All {tool.toolBrand} Tools
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

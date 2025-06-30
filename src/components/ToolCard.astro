@@ -23,7 +23,7 @@ const { tool } = Astro.props;
 <div class="card">
   <div class="card-content">
     <h3 class="title is-5 has-text-dark">
-      <a href={`/tools/${tool.modelNumber?.toLowerCase()}/`} class="has-text-dark">
+      <a href={`/tools/${tool.modelNumber?.toLowerCase().replace(/[^a-z0-9-]/g, '-')}/`} class="has-text-dark">
         {tool.name}
       </a>
     </h3>
