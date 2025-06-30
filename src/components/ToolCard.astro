@@ -20,59 +20,61 @@ export interface Props {
 const { tool } = Astro.props;
 ---
 
-<div class="bg-white ba b--light-gray br3 pa4 h-100 shadow-2 hover-shadow-3 transition-all">
-  <h3 class="f4 fw6 mt0 mb2 dark-gray lh-title">
-    <a href={`/tools/${tool.modelNumber?.toLowerCase()}/`} class="no-underline dark-gray hover-blue">
-      {tool.name}
-    </a>
-  </h3>
-  
-  {tool.modelNumber && (
-    <p class="f6 mid-gray mv2">Model: {tool.modelNumber}</p>
-  )}
-  
-  {tool.categories && tool.categories.length > 0 && (
-    <div class="mb3">
-      {tool.categories.map((category) => (
-        <span class="f7 bg-light-gray dark-gray ph2 pv1 br2 mr1 dib mb1">
-          {category}
-        </span>
-      ))}
-    </div>
-  )}
-
-  {tool.priceRange && (
-    <div class="mb3">
-      <div class="f5 fw6 dark-gray">
-        {tool.priceRange.min === tool.priceRange.max 
-          ? `$${tool.priceRange.min.toFixed(2)}`
-          : `$${tool.priceRange.min.toFixed(2)} - $${tool.priceRange.max.toFixed(2)}`
-        }
+<div class="card">
+  <div class="card-content">
+    <h3 class="title is-5 has-text-dark">
+      <a href={`/tools/${tool.modelNumber?.toLowerCase()}/`} class="has-text-dark">
+        {tool.name}
+      </a>
+    </h3>
+    
+    {tool.modelNumber && (
+      <p class="is-size-7 has-text-grey mb-3">Model: {tool.modelNumber}</p>
+    )}
+    
+    {tool.categories && tool.categories.length > 0 && (
+      <div class="tags mb-4">
+        {tool.categories.map((category) => (
+          <span class="tag is-light is-small">
+            {category}
+          </span>
+        ))}
       </div>
-      <div class="f6 mid-gray">
-        Available at {tool.storeCount} store{tool.storeCount !== 1 ? 's' : ''}
-      </div>
-    </div>
-  )}
+    )}
 
-  {tool.stores && tool.stores.length > 0 && (
-    <div class="mt3">
-      {tool.stores.slice(0, 3).map((store) => (
-        <div class="flex justify-between items-center mb2 pb2 bb b--light-gray">
-          <div>
-            <div class="f6 fw6 dark-gray capitalize">{store.store}</div>
-            <div class="f5 fw6 green">${store.effectivePrice.toFixed(2)}</div>
-          </div>
-          <a 
-            href={store.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="f6 link dim br2 ph2 pv1 dib white bg-blue hover-bg-dark-blue"
-          >
-            View
-          </a>
+    {tool.priceRange && (
+      <div class="mb-4">
+        <div class="is-size-5 has-text-weight-semibold has-text-dark">
+          {tool.priceRange.min === tool.priceRange.max 
+            ? `$${tool.priceRange.min.toFixed(2)}`
+            : `$${tool.priceRange.min.toFixed(2)} - $${tool.priceRange.max.toFixed(2)}`
+          }
         </div>
-      ))}
-    </div>
-  )}
+        <div class="is-size-6 has-text-grey">
+          Available at {tool.storeCount} store{tool.storeCount !== 1 ? 's' : ''}
+        </div>
+      </div>
+    )}
+
+    {tool.stores && tool.stores.length > 0 && (
+      <div class="mt-4">
+        {tool.stores.slice(0, 3).map((store) => (
+          <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 pb-2" style="border-bottom: 1px solid #dbdbdb;">
+            <div>
+              <div class="is-size-6 has-text-weight-semibold has-text-dark is-capitalized">{store.store}</div>
+              <div class="is-size-5 has-text-weight-semibold has-text-success">${store.effectivePrice.toFixed(2)}</div>
+            </div>
+            <a 
+              href={store.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="button is-primary is-small"
+            >
+              View
+            </a>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
 </div>

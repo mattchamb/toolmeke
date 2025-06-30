@@ -10,90 +10,104 @@ const featured_image = "/ryno-marais-42eUGq_IOow-unsplash.jpg";
 
 <Layout title={title} description={description} featured_image={featured_image}>
   <!-- Brands Section -->
-  <div class="bg-light-gray pv5">
-    <div class="mw9 center ph3 ph4-l">
-      <h2 class="f2 fw6 mb4 tc dark-gray">Brands</h2>
-      <p class="f5 mid-gray tc mb4 measure center">Compare prices across different retailers for these popular tool brands</p>
-      <div class="cf">
+  <section class="section has-background-light">
+    <div class="container">
+      <h2 class="title is-2 has-text-centered has-text-dark">Brands</h2>
+      <p class="subtitle is-5 has-text-grey has-text-centered mb-5">Compare prices across different retailers for these popular tool brands</p>
+      <div class="columns is-multiline">
         {brands.slice(0, 6).map((brand) => (
-          <div class="fl w-100 w-50-m w-33-l pa3">
-            <div class="bg-white ba b--light-gray br3 pa4 tc hover-bg-near-white shadow-2 hover-shadow-3 transition-all">
-              <h3 class="f3 fw6 mv0">
-                <a href={`/brands/${brand.slug}/`} class="no-underline dark-gray hover-blue">{brand.name}</a>
-              </h3>
-              <p class="f6 mid-gray mv2">{brand.toolCount} tools available</p>
-              <a href={`/brands/${brand.slug}/`} class="f6 link dim br3 ph3 pv2 mb2 dib white bg-blue hover-bg-dark-blue">Browse Tools</a>
+          <div class="column is-12-mobile is-6-tablet is-4-desktop">
+            <div class="card has-text-centered">
+              <div class="card-content">
+                <h3 class="title is-4 mb-2">
+                  <a href={`/brands/${brand.slug}/`} class="has-text-dark">{brand.name}</a>
+                </h3>
+                <p class="is-size-6 has-text-grey mb-3">{brand.toolCount} tools available</p>
+                <a href={`/brands/${brand.slug}/`} class="button is-primary">Browse Tools</a>
+              </div>
             </div>
           </div>
         ))}
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- Hero Section -->
-  <div class="bg-dark-gray white pv5 ph3">
-    <article class="cf ph3 ph5-l pv3 pv4-l f4 tc center measure-wide lh-copy">
-      <h1 class="f1 fw6 mb4">Welcome to ToolMeke</h1>
-      <p class="f4 mb4">
-        An <strong>independent tool price comparison</strong> project for New Zealand DIY enthusiasts and tradies. 
-        This is a personal side project created to help people find better tool deals across major hardware stores.
-      </p>
-      
-      <h2 class="f2 fw6 mb3">🔧 What We Do</h2>
-      <p class="f4 mb4">
-        We collect and compare tool prices from various New Zealand retailers to help you make informed purchasing decisions. 
-        Our data is gathered through automated price checking and presented here for your convenience.
-      </p>
-      
-      <hr class="mv4 bb b--white-20" />
-      
-      <p class="f5 mid-gray">
-        <strong>Disclaimer:</strong> ToolMeke is an independent project with no affiliation to any hardware stores or manufacturers. 
-        We don't earn commissions from purchases - this is purely a helpful resource for the NZ tool community.
-      </p>
-    </article>
-  </div>
+  <section class="hero is-dark is-medium">
+    <div class="hero-body">
+      <div class="container has-text-centered">
+        <h1 class="title is-1 has-text-weight-semibold mb-4">Welcome to ToolMeke</h1>
+        <p class="subtitle is-4 mb-4">
+          An <strong>independent tool price comparison</strong> project for New Zealand DIY enthusiasts and tradies. 
+          This is a personal side project created to help people find better tool deals across major hardware stores.
+        </p>
+        
+        <h2 class="title is-2 has-text-weight-semibold mb-3">🔧 What We Do</h2>
+        <p class="subtitle is-4 mb-4">
+          We collect and compare tool prices from various New Zealand retailers to help you make informed purchasing decisions. 
+          Our data is gathered through automated price checking and presented here for your convenience.
+        </p>
+        
+        <hr class="my-5" />
+        
+        <p class="is-size-5 has-text-grey-light">
+          <strong>Disclaimer:</strong> ToolMeke is an independent project with no affiliation to any hardware stores or manufacturers. 
+          We don't earn commissions from purchases - this is purely a helpful resource for the NZ tool community.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <!-- Site Statistics -->
-  <div class="mw9 center ph3 ph4-l pv5">
-    <h2 class="f2 fw6 mb4 tc dark-gray">Current Database</h2>
-    <div class="cf">
-      <div class="fl w-100 w-25-l pa3 tc">
-        <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
-          <div class="w3 h3 br-100 bg-blue center mb3 flex items-center justify-center">
-            <span class="f4 white">🔧</span>
+  <section class="section">
+    <div class="container">
+      <h2 class="title is-2 has-text-centered has-text-dark mb-5">Current Database</h2>
+      <div class="columns">
+        <div class="column is-3 has-text-centered">
+          <div class="card">
+            <div class="card-content">
+              <div class="has-text-primary mb-3">
+                <span class="is-size-1">🔧</span>
+              </div>
+              <h3 class="title is-2 has-text-dark">{stats.totalTools}</h3>
+              <p class="is-size-6 has-text-grey">Tools Tracked</p>
+            </div>
           </div>
-          <h3 class="f2 fw6 mv0 dark-gray">{stats.totalTools}</h3>
-          <p class="f6 mid-gray mv1">Tools Tracked</p>
         </div>
-      </div>
-      <div class="fl w-100 w-25-l pa3 tc">
-        <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
-          <div class="w3 h3 br-100 bg-green center mb3 flex items-center justify-center">
-            <span class="f4 white">🏭</span>
+        <div class="column is-3 has-text-centered">
+          <div class="card">
+            <div class="card-content">
+              <div class="has-text-success mb-3">
+                <span class="is-size-1">🏭</span>
+              </div>
+              <h3 class="title is-2 has-text-dark">{stats.totalBrands}</h3>
+              <p class="is-size-6 has-text-grey">Brands</p>
+            </div>
           </div>
-          <h3 class="f2 fw6 mv0 dark-gray">{stats.totalBrands}</h3>
-          <p class="f6 mid-gray mv1">Brands</p>
         </div>
-      </div>
-      <div class="fl w-100 w-25-l pa3 tc">
-        <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
-          <div class="w3 h3 br-100 bg-orange center mb3 flex items-center justify-center">
-            <span class="f4 white">🏪</span>
+        <div class="column is-3 has-text-centered">
+          <div class="card">
+            <div class="card-content">
+              <div class="has-text-warning mb-3">
+                <span class="is-size-1">🏪</span>
+              </div>
+              <h3 class="title is-2 has-text-dark">{stats.totalStores}</h3>
+              <p class="is-size-6 has-text-grey">Stores</p>
+            </div>
           </div>
-          <h3 class="f2 fw6 mv0 dark-gray">{stats.totalStores}</h3>
-          <p class="f6 mid-gray mv1">Stores</p>
         </div>
-      </div>
-      <div class="fl w-100 w-25-l pa3 tc">
-        <div class="bg-white ba b--light-gray br3 pa4 shadow-2 hover-shadow-3 transition-all">
-          <div class="w3 h3 br-100 bg-dark-gray center mb3 flex items-center justify-center">
-            <span class="f4 white">📅</span>
+        <div class="column is-3 has-text-centered">
+          <div class="card">
+            <div class="card-content">
+              <div class="has-text-dark mb-3">
+                <span class="is-size-1">📅</span>
+              </div>
+              <h3 class="title is-4 has-text-dark">{stats.lastUpdated}</h3>
+              <p class="is-size-6 has-text-grey">Last Updated</p>
+            </div>
           </div>
-          <h3 class="f4 fw6 mv0 dark-gray">{stats.lastUpdated}</h3>
-          <p class="f6 mid-gray mv1">Last Updated</p>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </Layout>

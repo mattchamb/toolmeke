@@ -7,26 +7,30 @@ const description = "Browse tools by brand - compare prices across New Zealand h
 ---
 
 <Layout title={title} description={description}>
-  <div class="mw9 center ph3 ph4-l pv5">
-    <h1 class="f1 fw6 mb4 tc dark-gray">Tool Brands</h1>
-    <p class="f4 mid-gray tc mb5 measure center">
-      Browse tools by brand and compare prices across New Zealand hardware stores
-    </p>
-    
-    <div class="cf">
-      {brands.map((brand) => (
-        <div class="fl w-100 w-50-m w-33-l pa3">
-          <div class="bg-white ba b--light-gray br3 pa4 hover-bg-light-gray shadow-2 hover-shadow-3 transition-all">
-            <h3 class="f3 fw6 mt0 mb2">
-              <a href={`/brands/${brand.slug}/`} class="no-underline dark-gray hover-blue">{brand.name}</a>
-            </h3>
-            <p class="f6 mid-gray mv2">{brand.toolCount} tools available</p>
-            <a href={`/brands/${brand.slug}/`} class="f6 link dim br2 ph3 pv2 mb2 dib white bg-dark-blue hover-bg-blue">
-              Browse Tools
-            </a>
+  <section class="section">
+    <div class="container">
+      <h1 class="title is-1 has-text-centered has-text-dark">Tool Brands</h1>
+      <p class="subtitle is-4 has-text-grey has-text-centered mb-6">
+        Browse tools by brand and compare prices across New Zealand hardware stores
+      </p>
+      
+      <div class="columns is-multiline">
+        {brands.map((brand) => (
+          <div class="column is-12-mobile is-6-tablet is-4-desktop">
+            <div class="card">
+              <div class="card-content">
+                <h3 class="title is-4 mb-2">
+                  <a href={`/brands/${brand.slug}/`} class="has-text-dark">{brand.name}</a>
+                </h3>
+                <p class="is-size-6 has-text-grey mb-3">{brand.toolCount} tools available</p>
+                <a href={`/brands/${brand.slug}/`} class="button is-primary">
+                  Browse Tools
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
+  </section>
 </Layout>

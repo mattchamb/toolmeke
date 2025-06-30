@@ -26,39 +26,41 @@ const description = `Compare prices for ${brand.name} tools across New Zealand h
 ---
 
 <Layout title={title} description={description}>
-  <div class="mw9 center ph3 ph4-l pv5">
-    <div class="mb5">
-      <h1 class="f1 fw6 mb3 dark-gray">{brand.name} Tools</h1>
-      <p class="f4 mid-gray mb4">
-        Compare prices for {brand.name} tools across New Zealand hardware stores
-      </p>
-      <div class="flex items-center mb4">
-        <span class="f6 fw6 dark-gray mr2">Total Tools:</span>
-        <span class="f6 mid-gray">{brand.toolCount}</span>
-      </div>
-    </div>
-
-    {tools.length > 0 ? (
-      <div class="cf">
-        {tools.slice(0, 50).map((tool) => (
-          <div class="fl w-100 w-50-m w-33-l pa3">
-            <ToolCard tool={tool} />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div class="tc pv5">
-        <p class="f4 mid-gray">No tools data available for {brand.name} at the moment.</p>
-        <p class="f5 mid-gray">Please check back later for updated pricing information.</p>
-      </div>
-    )}
-
-    {tools.length > 50 && (
-      <div class="tc mt5">
-        <p class="f5 mid-gray">
-          Showing first 50 tools. Total available: {brand.toolCount}
+  <section class="section">
+    <div class="container">
+      <div class="mb-6">
+        <h1 class="title is-1 has-text-dark">{brand.name} Tools</h1>
+        <p class="subtitle is-4 has-text-grey mb-4">
+          Compare prices for {brand.name} tools across New Zealand hardware stores
         </p>
+        <div class="is-flex is-align-items-center mb-4">
+          <span class="is-size-6 has-text-weight-semibold has-text-dark mr-2">Total Tools:</span>
+          <span class="is-size-6 has-text-grey">{brand.toolCount}</span>
+        </div>
       </div>
-    )}
-  </div>
+
+      {tools.length > 0 ? (
+        <div class="columns is-multiline">
+          {tools.slice(0, 50).map((tool) => (
+            <div class="column is-12-mobile is-6-tablet is-4-desktop">
+              <ToolCard tool={tool} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="has-text-centered py-6">
+          <p class="subtitle is-4 has-text-grey">No tools data available for {brand.name} at the moment.</p>
+          <p class="is-size-5 has-text-grey">Please check back later for updated pricing information.</p>
+        </div>
+      )}
+
+      {tools.length > 50 && (
+        <div class="has-text-centered mt-5">
+          <p class="is-size-5 has-text-grey">
+            Showing first 50 tools. Total available: {brand.toolCount}
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
 </Layout>

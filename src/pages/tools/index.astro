@@ -7,43 +7,45 @@ const description = "Browse all tools and compare prices across New Zealand hard
 ---
 
 <Layout title={title} description={description}>
-  <div class="mw9 center ph3 ph4-l pv5">
-    <h1 class="f1 fw6 mb4 tc dark-gray">All Tools</h1>
-    <p class="f4 mid-gray tc mb5 measure center">
-      Browse our complete database of {stats.totalTools} tools across {stats.totalBrands} brands
-    </p>
-    
-    <div class="tc pv5">
-      <h2 class="f2 fw6 mb4 dark-gray">Browse by Brand</h2>
-      <p class="f4 mid-gray mb4">
-        To view our complete tool database, please browse by brand:
+  <section class="section">
+    <div class="container">
+      <h1 class="title is-1 has-text-centered has-text-dark">All Tools</h1>
+      <p class="subtitle is-4 has-text-grey has-text-centered mb-6">
+        Browse our complete database of {stats.totalTools} tools across {stats.totalBrands} brands
       </p>
-      <a href="/brands/" class="f4 link dim br3 ph4 pv3 dib white bg-blue hover-bg-dark-blue">
-        View All Brands
-      </a>
-    </div>
+      
+      <div class="has-text-centered py-5">
+        <h2 class="title is-2 has-text-dark mb-4">Browse by Brand</h2>
+        <p class="subtitle is-4 has-text-grey mb-4">
+          To view our complete tool database, please browse by brand:
+        </p>
+        <a href="/brands/" class="button is-primary is-large">
+          View All Brands
+        </a>
+      </div>
 
-    <!-- Featured categories could be added here in the future -->
-    <div class="bg-light-gray br3 pa4 mt5">
-      <h3 class="f3 fw6 mb3 dark-gray">Database Stats</h3>
-      <div class="cf">
-        <div class="fl w-100 w-25-l pa2 tc">
-          <div class="f2 fw6 dark-gray">{stats.totalTools}</div>
-          <div class="f6 mid-gray">Total Tools</div>
-        </div>
-        <div class="fl w-100 w-25-l pa2 tc">
-          <div class="f2 fw6 dark-gray">{stats.totalBrands}</div>
-          <div class="f6 mid-gray">Brands</div>
-        </div>
-        <div class="fl w-100 w-25-l pa2 tc">
-          <div class="f2 fw6 dark-gray">{stats.totalStores}</div>
-          <div class="f6 mid-gray">Stores</div>
-        </div>
-        <div class="fl w-100 w-25-l pa2 tc">
-          <div class="f4 fw6 dark-gray">{stats.lastUpdated}</div>
-          <div class="f6 mid-gray">Last Updated</div>
+      <!-- Featured categories could be added here in the future -->
+      <div class="box has-background-light mt-5">
+        <h3 class="title is-4 has-text-dark mb-4">Database Stats</h3>
+        <div class="columns">
+          <div class="column is-3 has-text-centered">
+            <div class="title is-2 has-text-dark">{stats.totalTools}</div>
+            <div class="is-size-6 has-text-grey">Total Tools</div>
+          </div>
+          <div class="column is-3 has-text-centered">
+            <div class="title is-2 has-text-dark">{stats.totalBrands}</div>
+            <div class="is-size-6 has-text-grey">Brands</div>
+          </div>
+          <div class="column is-3 has-text-centered">
+            <div class="title is-2 has-text-dark">{stats.totalStores}</div>
+            <div class="is-size-6 has-text-grey">Stores</div>
+          </div>
+          <div class="column is-3 has-text-centered">
+            <div class="title is-4 has-text-dark">{stats.lastUpdated}</div>
+            <div class="is-size-6 has-text-grey">Last Updated</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </Layout>
