@@ -1,6 +1,12 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import brands from '../../data/brands.json';
+import { getEntry } from 'astro:content';
+
+const brandsData = await getEntry('brands', 'brands');
+if (!brandsData) {
+  throw new Error('Brands data not found');
+}
+const brands = brandsData.data;
 
 const title = "Tool Brands - ToolMeke";
 const description = "Browse tools by brand - compare prices across New Zealand hardware stores";

@@ -1,21 +1,34 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import tools from '../../data/tools.json';
+import { getEntry } from 'astro:content';
+import type { toolSchema } from '../../content/config';
+import type { z } from 'astro:content';
+
+type Tool = z.infer<typeof toolSchema>;
 
 export async function getStaticPaths() {
-  return tools.map((tool) => ({
+  const toolsData = await getEntry('tools', 'tools');
+  const tools = toolsData.data;
+  
+  return tools.map((tool: Tool) => ({
     params: { slug: tool.modelNumber.toLowerCase().replace(/[^a-z0-9-]/g, '-') },
     props: { tool }
   }));
 }
 
-const { tool } = Astro.props;
+type Props = {
+  tool: Tool;
+};
+
+const { tool }: Props = Astro.props;
 
 const title = `${tool.name} - ToolMeke`;
 const description = `Compare prices for ${tool.name} (${tool.modelNumber}) across New Zealand hardware stores. Available from ${tool.storeCount} store${tool.storeCount !== 1 ? 's' : ''}.`;
 
-// Sort stores by price (lowest first)
-const sortedStores = tool.stores.sort((a, b) => a.effectivePrice - b.effectivePrice);
+// Sort stores by price (lowest first), handling null values
+const sortedStores = tool.stores
+  .filter(store => store.effectivePrice !== null)
+  .sort((a, b) => (a.effectivePrice || 0) - (b.effectivePrice || 0));
 ---
 
 <Layout title={title} description={description}>
@@ -66,7 +79,7 @@ const sortedStores = tool.stores.sort((a, b) => a.effectivePrice - b.effectivePr
                     <div class="is-size-6 has-text-grey">Best Price</div>
                   </div>
                 </div>
-                {tool.priceRange?.min !== tool.priceRange?.max && tool.priceRange?.max && (
+                {tool.priceRange?.min !== null && tool.priceRange?.max !== null && tool.priceRange?.min !== tool.priceRange?.max && tool.priceRange?.max && (
                   <div class="column">
                     <div class="has-text-centered">
                       <div class="title is-3 has-text-dark">
@@ -86,7 +99,7 @@ const sortedStores = tool.stores.sort((a, b) => a.effectivePrice - b.effectivePr
                 </div>
               </div>
 
-              {tool.priceRange?.min && tool.priceRange?.max && tool.priceRange.min !== tool.priceRange.max && (
+              {tool.priceRange?.min !== null && tool.priceRange?.max !== null && tool.priceRange.min !== tool.priceRange.max && (
                 <div class="notification is-info is-light">
                   <strong>Save ${(tool.priceRange.max - tool.priceRange.min).toFixed(2)}</strong> by choosing the best price!
                 </div>

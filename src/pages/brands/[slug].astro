@@ -1,9 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ToolCard from '../../components/ToolCard.astro';
-import brands from '../../data/brands.json';
+import { getEntry } from 'astro:content';
 
 export async function getStaticPaths() {
+  const brandsData = await getEntry('brands', 'brands');
+  if (!brandsData) {
+    throw new Error('Brands data not found');
+  }
+  const brands = brandsData.data;
+
   return brands.map((brand) => ({
     params: { slug: brand.slug },
     props: { brand }
@@ -12,14 +18,30 @@ export async function getStaticPaths() {
 
 const { brand } = Astro.props;
 
-// Load brand-specific tool data
-let tools = [];
-try {
-  const brandData = await import(`../../data/brand_${brand.slug}.json`);
-  tools = brandData.default || [];
-} catch (error) {
-  console.warn(`Could not load data for brand: ${brand.slug}`);
+// Load all tools and filter by brand
+const toolsData = await getEntry('tools', 'tools');
+if (!toolsData) {
+  throw new Error('Tools data not found');
 }
+const allTools = toolsData.data;
+const brandTools = allTools.filter(tool => tool.toolBrand.toLowerCase() === brand.name.toLowerCase());
+
+// Transform tools data to match ToolCard interface
+const tools = brandTools.map(tool => ({
+  modelNumber: tool.modelNumber,
+  name: tool.name,
+  categories: tool.categories,
+  priceRange: tool.priceRange.min !== null && tool.priceRange.max !== null ? {
+    min: tool.priceRange.min,
+    max: tool.priceRange.max
+  } : undefined,
+  storeCount: tool.storeCount,
+  stores: tool.stores.map(store => ({
+    store: store.store,
+    effectivePrice: store.effectivePrice || 0,
+    url: store.url
+  }))
+}));
 
 const title = `${brand.name} Tools - ToolMeke`;
 const description = `Compare prices for ${brand.name} tools across New Zealand hardware stores`;

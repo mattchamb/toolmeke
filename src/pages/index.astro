@@ -1,7 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import brands from '../data/brands.json';
+import { getEntry } from 'astro:content';
 import stats from '../data/stats.json';
+
+const brandsData = await getEntry('brands', 'brands');
+if (!brandsData) {
+  throw new Error('Brands data not found');
+}
+const brands = brandsData.data;
 
 const title = "ToolMeke - Independent Tool Price Comparison";
 const description = "An independent side project comparing tool prices across New Zealand hardware stores - no affiliations, no commissions, just helpful price data";
