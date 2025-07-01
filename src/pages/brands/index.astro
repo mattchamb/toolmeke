@@ -1,12 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getEntry } from 'astro:content';
+import { getBrandsFromTools } from '../../utils/data';
 
-const brandsData = await getEntry('brands', 'brands');
-if (!brandsData) {
-  throw new Error('Brands data not found');
-}
-const brands = brandsData.data;
+const brands = await getBrandsFromTools();
+
+// Helper function to check if brand image exists
+const hasImage = (slug: string) => ['bosch', 'dewalt', 'makita', 'milwaukee'].includes(slug);
 
 const title = "Tool Brands - ToolMeke";
 const description = "Browse tools by brand - compare prices across New Zealand hardware stores";
@@ -24,6 +23,13 @@ const description = "Browse tools by brand - compare prices across New Zealand h
         {brands.map((brand) => (
           <div class="column is-12-mobile is-6-tablet is-4-desktop">
             <div class="card">
+              {hasImage(brand.slug) && (
+                <div class="card-image">
+                  <figure class="image is-16by9">
+                    <img src={`/${brand.slug}.jpg`} alt={`${brand.name} tools in action`} />
+                  </figure>
+                </div>
+              )}
               <div class="card-content">
                 <h3 class="title is-4 mb-2">
                   <a href={`/brands/${brand.slug}/`} class="has-text-dark">{brand.name}</a>

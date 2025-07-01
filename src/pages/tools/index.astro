@@ -1,6 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import stats from '../../data/stats.json';
+import { getTools } from '../../utils/data';
+
+const tools = await getTools();
+const totalTools = tools.length;
+const uniqueBrands = [...new Set(tools.map(tool => tool.data.toolBrand))];
+const totalBrands = uniqueBrands.length;
+const uniqueStores = [...new Set(tools.flatMap(tool => tool.data.stores.map(store => store.store)))];
+const totalStores = uniqueStores.length;
+const lastUpdated = new Date().toISOString().split('T')[0];
 
 const title = "All Tools - ToolMeke";
 const description = "Browse all tools and compare prices across New Zealand hardware stores";
@@ -11,7 +19,7 @@ const description = "Browse all tools and compare prices across New Zealand hard
     <div class="container">
       <h1 class="title is-1 has-text-centered has-text-dark">All Tools</h1>
       <p class="subtitle is-4 has-text-grey has-text-centered mb-6">
-        Browse our complete database of {stats.totalTools} tools across {stats.totalBrands} brands
+        Browse our complete database of {totalTools} tools across {totalBrands} brands
       </p>
       
       <div class="has-text-centered py-5">
@@ -29,19 +37,19 @@ const description = "Browse all tools and compare prices across New Zealand hard
         <h3 class="title is-4 has-text-dark mb-4">Database Stats</h3>
         <div class="columns">
           <div class="column is-3 has-text-centered">
-            <div class="title is-2 has-text-dark">{stats.totalTools}</div>
+            <div class="title is-2 has-text-dark">{totalTools}</div>
             <div class="is-size-6 has-text-grey">Total Tools</div>
           </div>
           <div class="column is-3 has-text-centered">
-            <div class="title is-2 has-text-dark">{stats.totalBrands}</div>
+            <div class="title is-2 has-text-dark">{totalBrands}</div>
             <div class="is-size-6 has-text-grey">Brands</div>
           </div>
           <div class="column is-3 has-text-centered">
-            <div class="title is-2 has-text-dark">{stats.totalStores}</div>
+            <div class="title is-2 has-text-dark">{totalStores}</div>
             <div class="is-size-6 has-text-grey">Stores</div>
           </div>
           <div class="column is-3 has-text-centered">
-            <div class="title is-4 has-text-dark">{stats.lastUpdated}</div>
+            <div class="title is-4 has-text-dark">{lastUpdated}</div>
             <div class="is-size-6 has-text-grey">Last Updated</div>
           </div>
         </div>

@@ -1,13 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getEntry } from 'astro:content';
-import stats from '../data/stats.json';
+import { getBrandsFromTools, getTools } from '../utils/data';
 
-const brandsData = await getEntry('brands', 'brands');
-if (!brandsData) {
-  throw new Error('Brands data not found');
-}
-const brands = brandsData.data;
+const brands = await getBrandsFromTools();
+const tools = await getTools();
+
+// Calculate stats from tools data
+const uniqueBrands = [...new Set(tools.map(tool => tool.data.toolBrand))];
+const uniqueStores = [...new Set(tools.flatMap(tool => tool.data.stores.map(store => store.store)))];
+
+const stats = {
+  totalTools: tools.length,
+  totalBrands: uniqueBrands.length,
+  totalStores: uniqueStores.length,
+  brands: uniqueBrands,
+  stores: uniqueStores,
+  lastUpdated: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
+};
+
+// Helper function to check if brand image exists
+const hasImage = (slug: string) => ['bosch', 'dewalt', 'makita', 'milwaukee'].includes(slug);
 
 const title = "ToolMeke - Independent Tool Price Comparison";
 const description = "An independent side project comparing tool prices across New Zealand hardware stores - no affiliations, no commissions, just helpful price data";
@@ -23,8 +35,15 @@ const featured_image = "/ryno-marais-42eUGq_IOow-unsplash.jpg";
       <div class="columns is-multiline">
         {brands.slice(0, 6).map((brand) => (
           <div class="column is-12-mobile is-6-tablet is-4-desktop">
-            <div class="card has-text-centered">
-              <div class="card-content">
+            <div class="card">
+              {hasImage(brand.slug) && (
+                <div class="card-image">
+                  <figure class="image is-16by9">
+                    <img src={`/${brand.slug}.jpg`} alt={`${brand.name} tools in action`} />
+                  </figure>
+                </div>
+              )}
+              <div class="card-content has-text-centered">
                 <h3 class="title is-4 mb-2">
                   <a href={`/brands/${brand.slug}/`} class="has-text-dark">{brand.name}</a>
                 </h3>

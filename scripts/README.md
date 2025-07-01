@@ -1,16 +1,18 @@
 # Tool Data Collection Scripts
 
-Simple tool data collection system for the Hugo-based ToolMeke website.
+Simple tool data collection system for the Astro-based ToolMeke website.
 
 ## Overview
 
-This system collects product data from New Zealand hardware stores and processes it for Hugo. It's designed to be simple and work well with GNU `parallel` for concurrent execution.
+This system collects product data from New Zealand hardware stores and processes it for Astro. It's designed to be simple and work well with GNU `parallel` for concurrent execution.
+
+The system now uses a single `tools.json` file as the primary data source, with brands data derived at runtime for better consistency.
 
 ## Scripts
 
 - `get-store-data.sh` - Fetches data from a single store
 - `combine-store-data.sh` - Combines multiple store data files
-- `process-tools-simple.sh` - Processes data for Hugo
+- `process-tools-simple.sh` - Processes data for Astro (creates tools.json only)
 - `example-usage.sh` - Shows usage examples
 
 ## Basic Usage
@@ -32,10 +34,14 @@ echo 'bunnings mitre10 placemakers' | tr ' ' '\n' | parallel ./get-store-data.sh
 ./combine-store-data.sh tools.json bunnings_tools.json mitre10_tools.json placemakers_tools.json
 ```
 
-### Process for Hugo:
+### Process for Astro:
 ```bash
 ./process-tools-simple.sh tools.json
 ```
+
+This creates:
+- `src/content/tools/tools.json` - Main tools database
+- `src/content/brands/brands.json` - Empty file (brands derived at runtime)
 
 ## Complete Pipeline
 
@@ -46,9 +52,13 @@ echo 'bunnings mitre10 placemakers' | tr ' ' '\n' | parallel ./get-store-data.sh
 # Combine data
 ./combine-store-data.sh tools.json bunnings_tools.json mitre10_tools.json placemakers_tools.json
 
-# Process for Hugo
+# Process for Astro
 ./process-tools-simple.sh tools.json
 ```
+
+## Data Structure Changes
+
+The system has been simplified to use a single input file (`tools.json`) with brands data derived at runtime from the tools data. This ensures consistency and reduces file management complexity.
 
 ## Dependencies
 
@@ -76,11 +86,12 @@ The system creates these files:
 **Combined data:**
 - `tools.json` (JSONL format)
 
-**Hugo data files (in `../data/`):**
-- `tools.json` (processed for Hugo)
-- `brands.json`
-- `stats.json`
-- `brand_*.json`
+**Astro content files (in `../src/content/`):**
+- `tools/tools.json` (processed for Astro)
+- `brands/brands.json`
+- `stats.json` (summary statistics)
+
+**Note:** Individual brand files (`brand_*.json`) are no longer generated since Astro filters tools from the main `tools.json` file dynamically.
 
 ## Store Support
 
@@ -112,7 +123,6 @@ Run `./example-usage.sh` to see usage examples, or `./example-usage.sh run` to e
 The following scripts are preserved for reference but the new simple system is recommended:
 - `aggregate-data.sh` - Old monolithic data collection script
 - `fetch-product-details.sh` - Old product detail fetcher  
-- `process_tools.sh` - Old data processing script
 
 These can be removed once you're confident the new system works for your needs.
 

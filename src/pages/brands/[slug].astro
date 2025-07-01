@@ -1,14 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ToolCard from '../../components/ToolCard.astro';
-import { getEntry } from 'astro:content';
+import { getBrandsFromTools, getTools } from '../../utils/data';
 
 export async function getStaticPaths() {
-  const brandsData = await getEntry('brands', 'brands');
-  if (!brandsData) {
-    throw new Error('Brands data not found');
-  }
-  const brands = brandsData.data;
+  const brands = await getBrandsFromTools();
 
   return brands.map((brand) => ({
     params: { slug: brand.slug },
@@ -19,15 +15,11 @@ export async function getStaticPaths() {
 const { brand } = Astro.props;
 
 // Load all tools and filter by brand
-const toolsData = await getEntry('tools', 'tools');
-if (!toolsData) {
-  throw new Error('Tools data not found');
-}
-const allTools = toolsData.data;
-const brandTools = allTools.filter(tool => tool.toolBrand.toLowerCase() === brand.name.toLowerCase());
+const allTools = await getTools();
+const brandTools = allTools.filter(tool => tool.data.toolBrand.toLowerCase() === brand.name.toLowerCase());
 
 // Transform tools data to match ToolCard interface
-const tools = brandTools.map(tool => ({
+const tools = brandTools.map(({data: tool}) => ({
   modelNumber: tool.modelNumber,
   name: tool.name,
   categories: tool.categories,
@@ -45,21 +37,48 @@ const tools = brandTools.map(tool => ({
 
 const title = `${brand.name} Tools - ToolMeke`;
 const description = `Compare prices for ${brand.name} tools across New Zealand hardware stores`;
+
+// Check if brand image exists
+const brandImage = `/${brand.slug}.jpg`;
+const hasImage = ['bosch', 'dewalt', 'makita', 'milwaukee'].includes(brand.slug);
 ---
 
 <Layout title={title} description={description}>
-  <section class="section">
-    <div class="container">
-      <div class="mb-6">
-        <h1 class="title is-1 has-text-dark">{brand.name} Tools</h1>
-        <p class="subtitle is-4 has-text-grey mb-4">
-          Compare prices for {brand.name} tools across New Zealand hardware stores
-        </p>
-        <div class="is-flex is-align-items-center mb-4">
-          <span class="is-size-6 has-text-weight-semibold has-text-dark mr-2">Total Tools:</span>
-          <span class="is-size-6 has-text-grey">{brand.toolCount}</span>
+  <!-- Hero Section with Brand Image -->
+  {hasImage ? (
+    <section class="hero is-medium" style={`background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${brandImage}') center/cover;`}>
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title is-1 has-text-white">{brand.name} Tools</h1>
+          <p class="subtitle is-4 has-text-white-ter mb-4">
+            Compare prices for {brand.name} tools across New Zealand hardware stores
+          </p>
+          <div class="is-flex is-align-items-center">
+            <span class="is-size-6 has-text-weight-semibold has-text-white mr-2">Total Tools:</span>
+            <span class="tag is-primary is-medium">{brand.toolCount}</span>
+          </div>
         </div>
       </div>
+    </section>
+  ) : (
+    <section class="section">
+      <div class="container">
+        <div class="mb-6">
+          <h1 class="title is-1 has-text-dark">{brand.name} Tools</h1>
+          <p class="subtitle is-4 has-text-grey mb-4">
+            Compare prices for {brand.name} tools across New Zealand hardware stores
+          </p>
+          <div class="is-flex is-align-items-center mb-4">
+            <span class="is-size-6 has-text-weight-semibold has-text-dark mr-2">Total Tools:</span>
+            <span class="is-size-6 has-text-grey">{brand.toolCount}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class={`section${hasImage ? '' : ' pt-0'}`}>
+    <div class="container">
 
       {tools.length > 0 ? (
         <div class="columns is-multiline">

@@ -1,32 +1,25 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getEntry } from 'astro:content';
-import type { toolSchema } from '../../content/config';
-import type { z } from 'astro:content';
-
-type Tool = z.infer<typeof toolSchema>;
+import { getTools, normalizeSlug } from '../../utils/data';
 
 export async function getStaticPaths() {
-  const toolsData = await getEntry('tools', 'tools');
-  const tools = toolsData.data;
+  const tools = await getTools();
   
-  return tools.map((tool: Tool) => ({
-    params: { slug: tool.modelNumber.toLowerCase().replace(/[^a-z0-9-]/g, '-') },
+  return tools.map((tool) => ({
+    params: { slug: normalizeSlug(tool.data.modelNumber) },
     props: { tool }
   }));
 }
+``
+const { tool } = Astro.props;
 
-type Props = {
-  tool: Tool;
-};
+const toolData = tool.data;
 
-const { tool }: Props = Astro.props;
-
-const title = `${tool.name} - ToolMeke`;
-const description = `Compare prices for ${tool.name} (${tool.modelNumber}) across New Zealand hardware stores. Available from ${tool.storeCount} store${tool.storeCount !== 1 ? 's' : ''}.`;
+const title = `${toolData.name} - ToolMeke`;
+const description = `Compare prices for ${toolData.name} (${toolData.modelNumber}) across New Zealand hardware stores. Available from ${toolData.storeCount} store${toolData.storeCount !== 1 ? 's' : ''}.`;
 
 // Sort stores by price (lowest first), handling null values
-const sortedStores = tool.stores
+const sortedStores = toolData.stores
   .filter(store => store.effectivePrice !== null)
   .sort((a, b) => (a.effectivePrice || 0) - (b.effectivePrice || 0));
 ---
@@ -39,26 +32,26 @@ const sortedStores = tool.stores
         <ul>
           <li><a href="/">Home</a></li>
           <li><a href="/tools/">Tools</a></li>
-          <li><a href={`/brands/${tool.toolBrand.toLowerCase()}/`}>{tool.toolBrand}</a></li>
-          <li class="is-active"><a href="#" aria-current="page">{tool.modelNumber}</a></li>
+          <li><a href={`/brands/${toolData.toolBrand.toLowerCase()}/`}>{toolData.toolBrand}</a></li>
+          <li class="is-active"><a href="#" aria-current="page">{toolData.modelNumber}</a></li>
         </ul>
       </nav>
 
       <div class="columns">
         <div class="column is-8">
           <div class="box">
-            <h1 class="title is-2 has-text-dark mb-3">{tool.name}</h1>
+            <h1 class="title is-2 has-text-dark mb-3">{toolData.name}</h1>
             
             <div class="is-flex is-align-items-center mb-4">
-              <span class="tag is-primary is-medium mr-3">{tool.toolBrand}</span>
-              <span class="is-size-6 has-text-grey">Model: {tool.modelNumber}</span>
+              <span class="tag is-primary is-medium mr-3">{toolData.toolBrand}</span>
+              <span class="is-size-6 has-text-grey">Model: {toolData.modelNumber}</span>
             </div>
 
-            {tool.categories && tool.categories.length > 0 && (
+            {toolData.categories && toolData.categories.length > 0 && (
               <div class="mb-4">
                 <span class="is-size-6 has-text-weight-semibold has-text-dark mr-2">Categories:</span>
                 <div class="tags is-inline">
-                  {tool.categories.map((category) => (
+                  {toolData.categories.map((category) => (
                     <span class="tag is-light">
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </span>
@@ -74,16 +67,16 @@ const sortedStores = tool.stores
                 <div class="column">
                   <div class="has-text-centered">
                     <div class="title is-3 has-text-success">
-                      ${tool.priceRange?.min?.toFixed(2) || 'N/A'}
+                      ${toolData.priceRange?.min?.toFixed(2) || 'N/A'}
                     </div>
                     <div class="is-size-6 has-text-grey">Best Price</div>
                   </div>
                 </div>
-                {tool.priceRange?.min !== null && tool.priceRange?.max !== null && tool.priceRange?.min !== tool.priceRange?.max && tool.priceRange?.max && (
+                {toolData.priceRange?.min !== null && toolData.priceRange?.max !== null && toolData.priceRange?.min !== toolData.priceRange?.max && toolData.priceRange?.max && (
                   <div class="column">
                     <div class="has-text-centered">
                       <div class="title is-3 has-text-dark">
-                        ${tool.priceRange.max.toFixed(2)}
+                        ${toolData.priceRange.max.toFixed(2)}
                       </div>
                       <div class="is-size-6 has-text-grey">Highest Price</div>
                     </div>
@@ -92,16 +85,16 @@ const sortedStores = tool.stores
                 <div class="column">
                   <div class="has-text-centered">
                     <div class="title is-3 has-text-primary">
-                      {tool.storeCount}
+                      {toolData.storeCount}
                     </div>
-                    <div class="is-size-6 has-text-grey">Store{tool.storeCount !== 1 ? 's' : ''}</div>
+                    <div class="is-size-6 has-text-grey">Store{toolData.storeCount !== 1 ? 's' : ''}</div>
                   </div>
                 </div>
               </div>
 
-              {tool.priceRange?.min !== null && tool.priceRange?.max !== null && tool.priceRange.min !== tool.priceRange.max && (
+              {toolData.priceRange?.min !== null && toolData.priceRange?.max !== null && toolData.priceRange.min !== toolData.priceRange.max && (
                 <div class="notification is-info is-light">
-                  <strong>Save ${(tool.priceRange.max - tool.priceRange.min).toFixed(2)}</strong> by choosing the best price!
+                  <strong>Save ${(toolData.priceRange.max - toolData.priceRange.min).toFixed(2)}</strong> by choosing the best price!
                 </div>
               )}
             </div>
@@ -149,9 +142,9 @@ const sortedStores = tool.stores
 
           <!-- Similar Tools Section -->
           <div class="box">
-            <h3 class="title is-5 has-text-dark mb-4">More {tool.toolBrand} Tools</h3>
-            <a href={`/brands/${tool.toolBrand.toLowerCase()}/`} class="button is-primary is-fullwidth">
-              View All {tool.toolBrand} Tools
+            <h3 class="title is-5 has-text-dark mb-4">More {toolData.toolBrand} Tools</h3>
+            <a href={`/brands/${toolData.toolBrand.toLowerCase()}/`} class="button is-primary is-fullwidth">
+              View All {toolData.toolBrand} Tools
             </a>
           </div>
         </div>
