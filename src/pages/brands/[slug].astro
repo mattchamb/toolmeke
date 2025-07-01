@@ -82,7 +82,7 @@ const hasImage = ['bosch', 'dewalt', 'makita', 'milwaukee'].includes(brand.slug)
 
       {tools.length > 0 ? (
         <div class="columns is-multiline">
-          {tools.slice(0, 50).map((tool) => (
+          {tools.map((tool) => (
             <div class="column is-12-mobile is-6-tablet is-4-desktop">
               <ToolCard tool={tool} />
             </div>
@@ -92,14 +92,6 @@ const hasImage = ['bosch', 'dewalt', 'makita', 'milwaukee'].includes(brand.slug)
         <div class="has-text-centered py-6">
           <p class="subtitle is-4 has-text-grey">No tools data available for {brand.name} at the moment.</p>
           <p class="is-size-5 has-text-grey">Please check back later for updated pricing information.</p>
-        </div>
-      )}
-
-      {tools.length > 50 && (
-        <div class="has-text-centered mt-5">
-          <p class="is-size-5 has-text-grey">
-            Showing first 50 tools. Total available: {brand.toolCount}
-          </p>
         </div>
       )}
     </div>
