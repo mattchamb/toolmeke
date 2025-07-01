@@ -66,7 +66,7 @@ create_tool_json() {
 fetch_bunnings() {
     echo "Fetching Bunnings data..." >&2
     
-    local base_url="https://www.bunnings.co.nz/search/products?brandname=DEWALT%7CBosch+Professional%7CMakita%7CAEG%7CMakita+LXT%7CMakita+XGT&sort=NameAscending&pageSize=36&supercategories=Power+Tools--power-tools--L2"
+    local base_url="https://www.bunnings.co.nz/search/products?brandname=DEWALT%7CBosch+Professional%7CMakita%7CAEG%7CMakita+LXT%7CMakita+XGT%7CPaslode&sort=NameAscending&pageSize=36&supercategories=Power+Tools--power-tools--L2"
     local page=1
     local total_items=0
     
@@ -249,12 +249,7 @@ fetch_placemakers() {
                 rm -f "$product_file"
                 
                 if [ -n "$brand" ] && [ -n "$name" ]; then
-                    local full_url=""
-                    if [ -n "$url" ] && [[ ! "$url" =~ ^https?:// ]]; then
-                        full_url="https://www.placemakers.co.nz$url"
-                    fi
-                    
-                    create_tool_json "$brand" "$name" "$part_code" "$price" "" "$full_url" "placemakers" >> "$OUTPUT_FILE"
+                    create_tool_json "$brand" "$name" "$part_code" "$price" "" "$url" "placemakers" >> "$OUTPUT_FILE"
                     ((page_count++))
                 fi
             fi

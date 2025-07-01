@@ -5,18 +5,11 @@ set -e  # Exit on any error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SCRIPT_DATA_DIR="$SCRIPT_DIR/data"
-HUGO_DATA_DIR="$PROJECT_ROOT/data"
-TOOLS_INPUT_FILE="$SCRIPT_DATA_DIR/tools.json"
+TOOLS_INPUT_FILE="$SCRIPT_DATA_DIR/list.json"
 DETAILED_OUTPUT_FILE="$SCRIPT_DATA_DIR/tools_detailed.json"
 
 # Create script data directory if it doesn't exist
 mkdir -p "$SCRIPT_DATA_DIR"
-
-# Check if tools.json exists
-if [ ! -f "$TOOLS_INPUT_FILE" ]; then
-    echo "Error: $TOOLS_INPUT_FILE not found. Please run aggregate-data.sh first."
-    exit 1
-fi
 
 # Function to parse Bunnings product page
 parse_bunnings_product() {
@@ -45,27 +38,6 @@ parse_mitre10_product() {
                                '. + { modelNumber: $model_number }'
 }
 
-# Function to parse Placemakers product page
-parse_placemakers_product() {
-    local html_content="$1"
-    local original_data="$2"
-    
-    # Check if model number already exists in the data (from initial scraping)
-    local existing_model_number=$(echo "$original_data" | jq -r '.modelNumber // ""')
-    
-    if [ -n "$existing_model_number" ] && [ "$existing_model_number" != "null" ] && [ "$existing_model_number" != "" ]; then
-        # Model number already exists, just return the original data
-        echo "$original_data"
-    else
-        # Try to extract model number from the page if it wasn't captured initially
-        local model_number=$(echo "$html_content" | pup 'div.partCode text{}' 2>/dev/null | sed 's/^Part Code: //' | tr -d '\n' || echo "")
-        
-        # Return original data with parsed fields
-        echo "$original_data" | jq -c --arg model_number "$model_number" \
-                                   '. + { modelNumber: $model_number }'
-    fi
-}
-
 # Function to fetch and parse a single product
 fetch_product_details() {
     local tool_data="$1"
@@ -76,6 +48,13 @@ fetch_product_details() {
     echo "Fetching details for: $name ($store)" >&2
     echo "  URL: $url" >&2
     
+    # Skip fetching for placemakers.co.nz
+    if [[ "$url" == *"placemakers.co.nz"* ]]; then
+        echo "  Skipping fetch for placemakers.co.nz" >&2
+        echo "$tool_data"
+        return
+    fi
+
     # Fetch the product page HTML
     local html_content
     if ! html_content=$(curl -s -L --max-redirs 3 --connect-timeout 30 --max-time 60 \
@@ -102,12 +81,8 @@ fetch_product_details() {
         "mitre10")
             parsed_data=$(parse_mitre10_product "$html_content" "$tool_data")
             ;;
-        "placemakers")
-            parsed_data=$(parse_placemakers_product "$html_content" "$tool_data")
-            ;;
         *)
             echo "  Warning: Unknown store type '$store'" >&2
-            echo "$tool_data" | jq -c '. + { modelNumber: "UNKNOWN_STORE" }'
             ;;
     esac
     
