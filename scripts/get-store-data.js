@@ -3,6 +3,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { JSDOM } from 'jsdom';
+import { GET_CATEGORIES_QUERY, GET_PRODUCTS_QUERY } from './sydney-tools-queries.js';
 
 const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname);
 const SCRIPT_DATA_DIR = path.join(SCRIPT_DIR, 'data');
@@ -103,6 +104,12 @@ const STORE_CONFIG = {
         name: 'Placemakers',
         brands: ['HiKOKI', 'Makita', 'Milwaukee', 'DEWALT', 'DeWalt', 'Paslode', 'Nilfisk', 'Bosch', 'HIKOKI'],
         baseUrl: 'https://www.placemakers.co.nz'
+    },
+    sydneytools: {
+        name: 'Sydney Tools',
+        brands: ['Milwaukee', 'DEWALT', 'Makita', 'Bosch', 'HiKOKI', 'Festool', 'Metabo', 'Paslode'],
+        baseUrl: 'https://sydneytools.co.nz',
+        apiUrl: 'https://sydneytools.co.nz/graphql'
     }
 };
 
@@ -368,6 +375,140 @@ async function fetchPlacemakers(fetchDetails = false) {
     return paginatedFetch('Placemakers', fetchPlacemakersPage);
 }
 
+// Fetch Sydney Tools data
+async function fetchSydneyTools(fetchDetails = false) {
+    const config = STORE_CONFIG.sydneytools;
+    
+    // Helper function to make GraphQL requests
+    async function makeGraphQLRequest(query, variables) {
+        const response = await fetchWithRetry(config.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': '*/*',
+                'Content-Type': 'application/json',
+                'Origin': 'https://sydneytools.co.nz',
+                'Referer': 'https://sydneytools.co.nz/category/by-brand',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+            },
+            body: JSON.stringify({ query, variables })
+        });
+        
+        const apiResponse = await response.json();
+        
+        if (apiResponse.errors) {
+            throw new Error(`GraphQL errors: ${JSON.stringify(apiResponse.errors)}`);
+        }
+        
+        return apiResponse.data;
+    }
+    
+    // Get subcategories for a brand
+    async function getSubcategories(brandSlug) {
+        const data = await makeGraphQLRequest(GET_CATEGORIES_QUERY, { brandUrlSlug: brandSlug });
+        const catalogues = data?.viewer?.categories?.edges?.[0]?.node?.catalogues;
+        
+        if (!catalogues) {
+            return [];
+        }
+        
+        return catalogues.edges
+            .filter(edge => edge.node.__typename === 'Subcategory')
+            .map(edge => edge.node);
+    }
+    
+    // Get products for a brand and subcategory
+    async function getProducts(brandSlug, subcategorySlug) {
+        const products = [];
+        let cursor = null;
+        let hasNextPage = true;
+        
+        while (hasNextPage) {
+            const data = await makeGraphQLRequest(GET_PRODUCTS_QUERY, {
+                brandUrlSlug: brandSlug,
+                subcategoryUrlSlug: subcategorySlug,
+                count: 100,
+                cursor: cursor
+            });
+            
+            const catalogues = data?.viewer?.categories?.edges?.[0]?.node?.catalogues;
+            
+            if (!catalogues) {
+                break;
+            }
+            
+            const productEdges = catalogues.edges.filter(edge => edge.node.__typename === 'Product');
+            
+            for (const edge of productEdges) {
+                const product = edge.node;
+                const productBrand = product.brand?.name || '';
+                const name = product.name || '';
+                const modelNumber = product.model || product.secondModel || '';
+                const priceRrp = product.regularPrice || '';
+                const pricePromo = product.price || '';
+                const sku = product.sku || '';
+                const urlSlug = product.urlSlug || '';
+                const fullUrl = urlSlug ? `${config.baseUrl}/product/${urlSlug}` : '';
+                
+                let toolData = createToolJson(productBrand, name, modelNumber, priceRrp, pricePromo, fullUrl, 'sydneytools');
+                
+                // Add SKU to the tool data if available
+                if (sku) {
+                    toolData.sku = sku;
+                }
+                
+                products.push(toolData);
+            }
+            
+            hasNextPage = catalogues.pageInfo.hasNextPage;
+            cursor = catalogues.pageInfo.endCursor;
+            
+            // Rate limiting
+            await sleep(200);
+        }
+        
+        return products;
+    }
+    
+    // Fetch all tools for all configured brands
+    const allTools = [];
+    
+    for (const brand of config.brands) {
+        const brandSlug = brand.toLowerCase();
+        console.error(`  Fetching ${brand} tools...`);
+        
+        try {
+            // Get subcategories for this brand
+            const subcategories = await getSubcategories(brandSlug);
+            console.error(`    Found ${subcategories.length} subcategories for ${brand}`);
+            
+            // Get products from each subcategory
+            for (const subcategory of subcategories) {
+                console.error(`    Fetching products from ${subcategory.name} (${subcategory.docCount} products)`);
+                
+                try {
+                    const products = await getProducts(brandSlug, subcategory.urlSlug);
+                    allTools.push(...products);
+                    console.error(`    Retrieved ${products.length} products from ${subcategory.name}`);
+                } catch (error) {
+                    console.error(`    Error fetching products from ${subcategory.name}:`, error.message);
+                }
+                
+                // Rate limiting between subcategories
+                await sleep(500);
+            }
+            
+            console.error(`  Completed ${brand}: ${allTools.length} total tools so far`);
+        } catch (error) {
+            console.error(`  Error fetching ${brand} tools:`, error.message);
+        }
+        
+        // Rate limiting between brands
+        await sleep(1000);
+    }
+    
+    return allTools;
+}
+
 // DOM helper functions
 const getDomDocument = (htmlContent) => new JSDOM(htmlContent).window.document;
 
@@ -446,11 +587,43 @@ function parseMitre10Product(htmlContent, originalData) {
     }
 }
 
+// Parse Sydney Tools product page for detailed information
+function parseSydneyToolsProduct(htmlContent, originalData) {
+    try {
+        const document = getDomDocument(htmlContent);
+        const jsonData = getNextDataJson(document);
+        
+        if (!jsonData) {
+            console.error(`    Error: No __NEXT_DATA__ script found`);
+            return originalData;
+        }
+        
+        const productData = jsonData?.props?.pageProps?.productData;
+        
+        if (!productData) {
+            console.error(`    Warning: No product data found`);
+            return originalData;
+        }
+        
+        const modelNumber = productData.modelNumber || null;
+        
+        if (!modelNumber) {
+            console.error(`    Warning: Model number not found in product data`);
+        }
+        
+        return { ...originalData, modelNumber };
+    } catch (error) {
+        console.error(`    Error parsing Sydney Tools product:`, error.message);
+        return { ...originalData, modelNumber: null };
+    }
+}
+
 // Store function mapping
 const STORE_FETCHERS = new Map([
     ['bunnings', fetchBunnings],
     ['mitre10', fetchMitre10],
-    ['placemakers', fetchPlacemakers]
+    ['placemakers', fetchPlacemakers],
+    ['sydneytools', fetchSydneyTools]
 ]);
 
 // Main function
@@ -471,6 +644,7 @@ async function main() {
         console.error('  node get-store-data.js bunnings');
         console.error('  node get-store-data.js mitre10 --details');
         console.error('  node get-store-data.js placemakers --details --sample 5');
+        console.error('  node get-store-data.js sydneytools --details');
         process.exit(1);
     }
     
