@@ -135,7 +135,7 @@ async function paginatedFetch(storeName, fetchPageFn) {
             }
             
             page++;
-            await sleep(1000);
+            await sleep(500);
             
         } catch (error) {
             console.error(`  Error fetching page ${page}:`, error.message);
@@ -148,7 +148,7 @@ async function paginatedFetch(storeName, fetchPageFn) {
 }
 
 // Fetch Bunnings data
-async function fetchBunnings() {
+async function fetchBunnings(fetchDetails = false) {
     const config = STORE_CONFIG.bunnings;
     // Build URL parameters programmatically
     const brandParam = encodeURIComponent(config.brands.join('|'));
@@ -183,15 +183,32 @@ async function fetchBunnings() {
             return { pageTools: [], hasMore: false };
         }
         
-        const pageTools = results.map(result => {
+        const pageTools = [];
+        
+        for (const result of results) {
             const brand = result.raw?.brandname || '';
             const name = result.title || result.Title || '';
             const price = result.raw?.price || '';
             const productUrl = result.raw?.productroutingurl || '';
             const fullUrl = productUrl ? `${config.baseUrl}${productUrl}` : '';
             
-            return createToolJson(brand, name, '', price, '', fullUrl, 'bunnings');
-        });
+            let toolData = createToolJson(brand, name, '', price, '', fullUrl, 'bunnings');
+            
+            // Fetch product details if requested
+            if (fetchDetails && fullUrl) {
+                console.error(`    Fetching details for: ${name}`);
+                try {
+                    const detailResponse = await fetchWithRetry(fullUrl);
+                    const detailHtml = await detailResponse.text();
+                    toolData = parseBunningsProduct(detailHtml, toolData);
+                    await sleep(500); // Rate limiting
+                } catch (error) {
+                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                }
+            }
+            
+            pageTools.push(toolData);
+        }
         
         return { pageTools, hasMore: true };
     }
@@ -200,7 +217,7 @@ async function fetchBunnings() {
 }
 
 // Fetch Mitre10 data
-async function fetchMitre10() {
+async function fetchMitre10(fetchDetails = false) {
     
     // Fetch function for Mitre10 pages
     async function fetchMitre10Page(page) {
@@ -246,7 +263,9 @@ async function fetchMitre10() {
             return { pageTools: [], hasMore: false };
         }
         
-        const pageTools = apiResponse.results[0].hits.map(result => {
+        const pageTools = [];
+        
+        for (const result of apiResponse.results[0].hits) {
             const brand = result.brandName || '';
             const name = result.name || '';
             const priceRrp = result.prices?.nationalRRP || '';
@@ -254,8 +273,23 @@ async function fetchMitre10() {
             const productUrl = result.url || '';
             const fullUrl = productUrl ? `${config.baseUrl}${productUrl}` : '';
             
-            return createToolJson(brand, name, '', priceRrp, pricePromo, fullUrl, 'mitre10');
-        });
+            let toolData = createToolJson(brand, name, '', priceRrp, pricePromo, fullUrl, 'mitre10');
+            
+            // Fetch product details if requested
+            if (fetchDetails && fullUrl) {
+                console.error(`    Fetching details for: ${name}`);
+                try {
+                    const detailResponse = await fetchWithRetry(fullUrl);
+                    const detailHtml = await detailResponse.text();
+                    toolData = parseMitre10Product(detailHtml, toolData);
+                    await sleep(500); // Rate limiting
+                } catch (error) {
+                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                }
+            }
+            
+            pageTools.push(toolData);
+        }
         
         return { pageTools, hasMore: page < nbPages - 1 };
     }
@@ -264,7 +298,7 @@ async function fetchMitre10() {
 }
 
 // Fetch Placemakers data
-async function fetchPlacemakers() {
+async function fetchPlacemakers(fetchDetails = false) {
     const config = STORE_CONFIG.placemakers;
     // Build URL parameters programmatically
     const brandParams = config.brands.map(brand => `brand:${brand}`).join(':');
@@ -295,7 +329,9 @@ async function fetchPlacemakers() {
             return { pageTools: [], hasMore: false };
         }
         
-        const pageTools = Array.from(productItems).map(item => {
+        const pageTools = [];
+        
+        for (const item of productItems) {
             const brandElement = item.querySelector('div.manufacturer');
             const nameElement = item.querySelector('a.name');
             const partCodeElement = item.querySelector('div.partCode');
@@ -309,8 +345,22 @@ async function fetchPlacemakers() {
             const partCode = partCodeElement?.textContent?.replace('Part Code: ', '').trim() || '';
             const price = extractPlacemakersPrice(priceElement);
             
-            return createToolJson(brand, name, partCode, price, '', url, 'placemakers');
-        });
+            let toolData = createToolJson(brand, name, partCode, price, '', url, 'placemakers');
+            
+            // Note: Placemakers detail fetching is skipped in the original code
+            // but we'll keep the structure consistent for potential future use
+            if (fetchDetails && url && !url.includes('placemakers.co.nz')) {
+                console.error(`    Fetching details for: ${name}`);
+                try {
+                    // Placeholder for future Placemakers detail fetching
+                    console.error(`    Skipping detail fetch for Placemakers`);
+                } catch (error) {
+                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                }
+            }
+            
+            pageTools.push(toolData);
+        }
         
         return { pageTools, hasMore: true };
     }
@@ -396,93 +446,6 @@ function parseMitre10Product(htmlContent, originalData) {
     }
 }
 
-// Fetch product details for a single tool
-async function fetchProductDetails(toolData) {
-    const { store, url, name } = toolData;
-    
-    console.error(`Fetching details for: ${name} (${store})`);
-    console.error(`  URL: ${url}`);
-    
-    // Skip fetching for placemakers.co.nz
-    if (url.includes('placemakers.co.nz')) {
-        console.error('  Skipping fetch for placemakers.co.nz');
-        return toolData;
-    }
-    
-    try {
-        const response = await fetchWithRetry(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-            }
-        });
-        
-        const htmlContent = await response.text();
-        
-        if (!htmlContent) {
-            console.error('  Error: No content received');
-            return { ...toolData, modelNumber: null };
-        }
-        
-        // Parse based on store type
-        switch (store) {
-            case 'bunnings':
-                return parseBunningsProduct(htmlContent, toolData);
-            case 'mitre10':
-                return parseMitre10Product(htmlContent, toolData);
-            default:
-                console.error(`  Warning: Unknown store type '${store}'`);
-                return toolData;
-        }
-        
-    } catch (error) {
-        console.error(`  Error: Failed to fetch URL - ${error.message}`);
-        return { ...toolData, modelNumber: null };
-    }
-}
-
-// Process tools to fetch detailed information
-async function processToolsForDetails(tools, sampleSize = null) {
-    const toolsToProcess = sampleSize ? tools.slice(0, sampleSize) : tools;
-    const totalTools = toolsToProcess.length;
-    
-    console.error(`Processing ${totalTools} tools for detailed information...`);
-    
-    const results = { successful: 0, failed: 0 };
-    
-    // Process tools sequentially to respect rate limits
-    const detailedTools = await toolsToProcess.reduce(async (promiseAcc, tool, index) => {
-        const acc = await promiseAcc;
-        
-        console.error(`\n=== Processing tool ${index + 1} of ${totalTools} ===`);
-        
-        try {
-            const result = await fetchProductDetails(tool);
-            acc.push(result);
-            results.successful++;
-        } catch (error) {
-            console.error(`  Error: Failed to process tool - ${error.message}`);
-            acc.push(tool);
-            results.failed++;
-        }
-        
-        console.error(`  Progress: ${index + 1}/${totalTools} (successful: ${results.successful}, failed: ${results.failed})`);
-        
-        // Add delay between requests
-        if (index < toolsToProcess.length - 1) {
-            await sleep(1000);
-        }
-        
-        return acc;
-    }, Promise.resolve([]));
-    
-    console.error(`\n=== Processing Complete ===`);
-    console.error(`Total processed: ${totalTools}`);
-    console.error(`Successful: ${results.successful}`);
-    console.error(`Failed/Skipped: ${results.failed}`);
-    
-    return detailedTools;
-}
-
 // Store function mapping
 const STORE_FETCHERS = new Map([
     ['bunnings', fetchBunnings],
@@ -519,17 +482,13 @@ async function main() {
     }
     
     try {
-        let tools = await fetcherFn();
+        // Fetch tools with optional details
+        let tools = await fetcherFn(fetchDetails);
         
-        // Apply sample size limit if specified (before detailed fetching)
+        // Apply sample size limit if specified
         if (sampleSize && tools.length > sampleSize) {
             console.error(`Limiting to first ${sampleSize} tools (sample mode)`);
             tools = tools.slice(0, sampleSize);
-        }
-        
-        // Fetch detailed information if requested
-        if (fetchDetails && tools.length > 0) {
-            tools = await processToolsForDetails(tools);
         }
         
         // Save to file

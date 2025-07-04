@@ -6,9 +6,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "fetch": "node ./scripts/get-store-data.js placemakers",
+    "fetch:bunnings": "node ./scripts/get-store-data.js bunnings",
+    "fetch:mitre10": "node ./scripts/get-store-data.js mitre10",
+    "fetch:placemakers": "node ./scripts/get-store-data.js placemakers",
+    "fetch:all": "npm run fetch:bunnings && npm run fetch:mitre10 && npm run fetch:placemakers",
+    "fetch:details": "node ./scripts/get-store-data.js",
+    "fetch:sample": "node ./scripts/get-store-data.js placemakers --sample 5"
   },
   "dependencies": {
-    "astro": "^5.10.1"
+    "astro": "^5.10.1",
+    "jsdom": "^26.1.0"
   }
 }
