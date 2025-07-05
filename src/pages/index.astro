@@ -33,7 +33,7 @@ const featured_image = "/ryno-marais-42eUGq_IOow-unsplash.jpg";
       <h2 class="title is-2 has-text-centered has-text-dark">Brands</h2>
       <p class="subtitle is-5 has-text-grey has-text-centered mb-5">Compare prices across different retailers for these popular tool brands</p>
       <div class="columns is-multiline">
-        {brands.slice(0, 6).map((brand) => (
+        {brands.map((brand) => (
           <div class="column is-12-mobile is-6-tablet is-4-desktop">
             <div class="card">
               {hasImage(brand.slug) && (
