@@ -18,8 +18,16 @@ const BRAND_MAPPING = new Map([
     ['hikoki', 'HiKOKI'],
     ['makita lxt', 'Makita'],
     ['makita xgt', 'Makita'],
+    ['makita', 'Makita'],
     ['bosch professional', 'Bosch'],
-    ['aeg', 'AEG']
+    ['bosch', 'Bosch'],
+    ['aeg', 'AEG'],
+    ['festool', 'Festool'],
+    ['metabo', 'Metabo'],
+    ['paslode', 'Paslode'],
+    ['ryobi', 'Ryobi'],
+    ['black+decker', 'Black+Decker'],
+    ['toolshed', 'ToolShed']
 ]);
 
 function normalizeBrand(brand) {
@@ -73,13 +81,19 @@ async function fetchWithRetry(url, options = {}, maxRetries = 3) {
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Don't retry on 404 errors - the resource doesn't exist
+                if (response.status === 404) {
+                    throw error;
+                }
+                throw error;
             }
             
             return response;
         } catch (error) {
             console.error(`  Attempt ${attempt}/${maxRetries} failed:`, error.message);
-            if (attempt === maxRetries) {
+            // Don't retry on 404 errors or if this is the last attempt
+            if (error.message.includes('HTTP 404') || attempt === maxRetries) {
                 throw error;
             }
             await sleep(1000 * attempt); // Exponential backoff
@@ -110,34 +124,39 @@ const STORE_CONFIG = {
         brands: ['Milwaukee', 'DEWALT', 'Makita', 'Bosch', 'HiKOKI', 'Festool', 'Metabo', 'Paslode'],
         baseUrl: 'https://sydneytools.co.nz',
         apiUrl: 'https://sydneytools.co.nz/graphql'
+    },
+    toolshed: {
+        name: 'The Tool Shed',
+        brands: ['DEWALT', 'Milwaukee', 'Makita', 'HiKOKI', 'Metabo'],
+        baseUrl: 'https://www.thetoolshed.co.nz'
     }
 };
 
 // Generic pagination helper
 async function paginatedFetch(storeName, fetchPageFn) {
-    console.error(`Fetching ${storeName} data...`);
+    console.error(`[${storeName}] Fetching ${storeName} data...`);
     
-    let page = storeName === 'bunnings' ? 1 : 0; // Bunnings starts at 1, others at 0
+    let page = storeName.toLowerCase() === 'bunnings' ? 1 : 0; // Bunnings starts at 1, others at 0
     let totalItems = 0;
     const tools = [];
     
     while (true) {
-        console.error(`  Fetching ${storeName} page ${page}...`);
+        console.error(`[${storeName}] Fetching ${storeName} page ${page}...`);
         
         try {
             const { pageTools, hasMore } = await fetchPageFn(page);
             
             if (pageTools.length === 0) {
-                console.error(`  No valid products found on page ${page}`);
+                console.error(`[${storeName}] No valid products found on page ${page}`);
                 break;
             }
             
             tools.push(...pageTools);
             totalItems += pageTools.length;
-            console.error(`  Page ${page}: ${pageTools.length} items (total: ${totalItems})`);
+            console.error(`[${storeName}] Page ${page}: ${pageTools.length} items (total: ${totalItems})`);
             
             if (!hasMore) {
-                console.error(`  Reached last page (${page})`);
+                console.error(`[${storeName}] Reached last page (${page})`);
                 break;
             }
             
@@ -145,12 +164,12 @@ async function paginatedFetch(storeName, fetchPageFn) {
             await sleep(500);
             
         } catch (error) {
-            console.error(`  Error fetching page ${page}:`, error.message);
+            console.error(`[${storeName}] Error fetching page ${page}:`, error.message);
             break;
         }
     }
     
-    console.error(`${storeName} complete: ${totalItems} items`);
+    console.error(`[${storeName}] ${storeName} complete: ${totalItems} items`);
     return tools;
 }
 
@@ -159,10 +178,10 @@ async function fetchBunnings(fetchDetails = false) {
     const config = STORE_CONFIG.bunnings;
     // Build URL parameters programmatically
     const brandParam = encodeURIComponent(config.brands.join('|'));
-    const categoryParam = encodeURIComponent('Power Tools--power-tools--L2');
+    const categoryParam = encodeURIComponent('Power+Tools--power-tools--L2');
     
     const baseUrl = `${config.baseUrl}/search/products?brandname=${brandParam}&sort=NameAscending&pageSize=36&supercategories=${categoryParam}`;
-    
+    console.error(`[Bunnings] Base URL: ${baseUrl}`);
     // Fetch function for Bunnings pages
     async function fetchBunningsPage(page) {
         const url = `${baseUrl}&page=${page}`;
@@ -170,15 +189,16 @@ async function fetchBunnings(fetchDetails = false) {
         const htmlContent = await response.text();
         
         if (!htmlContent) {
-            console.error(`  No content received for page ${page}`);
+            console.error(`[Bunnings] No content received for page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
         const dom = new JSDOM(htmlContent);
         const nextDataScript = dom.window.document.querySelector('#__NEXT_DATA__');
+
         
         if (!nextDataScript) {
-            console.error(`  No __NEXT_DATA__ found on page ${page}`);
+            console.error(`[Bunnings] No __NEXT_DATA__ found on page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
@@ -186,7 +206,7 @@ async function fetchBunnings(fetchDetails = false) {
         const results = jsonData?.props?.pageProps?.initialState?.global?.searchResults?.data?.results;
         
         if (!results || results.length === 0) {
-            console.error(`  No more results found at page ${page}`);
+            console.error(`[Bunnings] No more results found at page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
@@ -203,14 +223,14 @@ async function fetchBunnings(fetchDetails = false) {
             
             // Fetch product details if requested
             if (fetchDetails && fullUrl) {
-                console.error(`    Fetching details for: ${name}`);
+                console.error(`[Bunnings] Fetching details for: ${name}`);
                 try {
                     const detailResponse = await fetchWithRetry(fullUrl);
                     const detailHtml = await detailResponse.text();
                     toolData = parseBunningsProduct(detailHtml, toolData);
                     await sleep(500); // Rate limiting
                 } catch (error) {
-                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                    console.error(`[Bunnings] Error fetching details for ${name}: ${error.message}`);
                 }
             }
             
@@ -266,7 +286,7 @@ async function fetchMitre10(fetchDetails = false) {
         const nbPages = apiResponse?.results?.[0]?.nbPages || 0;
         
         if (hitsOnPage === 0) {
-            console.error(`  No more results found at page ${page}`);
+            console.error(`[Mitre10] No more results found at page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
@@ -284,14 +304,14 @@ async function fetchMitre10(fetchDetails = false) {
             
             // Fetch product details if requested
             if (fetchDetails && fullUrl) {
-                console.error(`    Fetching details for: ${name}`);
+                console.error(`[Mitre10] Fetching details for: ${name}`);
                 try {
                     const detailResponse = await fetchWithRetry(fullUrl);
                     const detailHtml = await detailResponse.text();
                     toolData = parseMitre10Product(detailHtml, toolData);
                     await sleep(500); // Rate limiting
                 } catch (error) {
-                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                    console.error(`[Mitre10] Error fetching details for ${name}: ${error.message}`);
                 }
             }
             
@@ -323,7 +343,7 @@ async function fetchPlacemakers(fetchDetails = false) {
         const htmlContent = await response.text();
         
         if (!htmlContent) {
-            console.error(`  No content received for page ${page}`);
+            console.error(`[Placemakers] No content received for page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
@@ -332,7 +352,7 @@ async function fetchPlacemakers(fetchDetails = false) {
         const productItems = document.querySelectorAll('div.product-item');
         
         if (productItems.length === 0) {
-            console.error(`  No products found on page ${page}`);
+            console.error(`[Placemakers] No products found on page ${page}`);
             return { pageTools: [], hasMore: false };
         }
         
@@ -357,12 +377,12 @@ async function fetchPlacemakers(fetchDetails = false) {
             // Note: Placemakers detail fetching is skipped in the original code
             // but we'll keep the structure consistent for potential future use
             if (fetchDetails && url && !url.includes('placemakers.co.nz')) {
-                console.error(`    Fetching details for: ${name}`);
+                console.error(`[Placemakers] Fetching details for: ${name}`);
                 try {
                     // Placeholder for future Placemakers detail fetching
-                    console.error(`    Skipping detail fetch for Placemakers`);
+                    console.error(`[Placemakers] Skipping detail fetch for Placemakers`);
                 } catch (error) {
-                    console.error(`    Error fetching details for ${name}: ${error.message}`);
+                    console.error(`[Placemakers] Error fetching details for ${name}: ${error.message}`);
                 }
             }
             
@@ -474,32 +494,32 @@ async function fetchSydneyTools(fetchDetails = false) {
     
     for (const brand of config.brands) {
         const brandSlug = brand.toLowerCase();
-        console.error(`  Fetching ${brand} tools...`);
+        console.error(`[Sydney Tools] Fetching ${brand} tools...`);
         
         try {
             // Get subcategories for this brand
             const subcategories = await getSubcategories(brandSlug);
-            console.error(`    Found ${subcategories.length} subcategories for ${brand}`);
+            console.error(`[Sydney Tools] Found ${subcategories.length} subcategories for ${brand}`);
             
             // Get products from each subcategory
             for (const subcategory of subcategories) {
-                console.error(`    Fetching products from ${subcategory.name} (${subcategory.docCount} products)`);
+                console.error(`[Sydney Tools] Fetching products from ${subcategory.name} (${subcategory.docCount} products)`);
                 
                 try {
                     const products = await getProducts(brandSlug, subcategory.urlSlug);
                     allTools.push(...products);
-                    console.error(`    Retrieved ${products.length} products from ${subcategory.name}`);
+                    console.error(`[Sydney Tools] Retrieved ${products.length} products from ${subcategory.name}`);
                 } catch (error) {
-                    console.error(`    Error fetching products from ${subcategory.name}:`, error.message);
+                    console.error(`[Sydney Tools] Error fetching products from ${subcategory.name}:`, error.message);
                 }
                 
                 // Rate limiting between subcategories
                 await sleep(500);
             }
             
-            console.error(`  Completed ${brand}: ${allTools.length} total tools so far`);
+            console.error(`[Sydney Tools] Completed ${brand}: ${allTools.length} total tools so far`);
         } catch (error) {
-            console.error(`  Error fetching ${brand} tools:`, error.message);
+            console.error(`[Sydney Tools] Error fetching ${brand} tools:`, error.message);
         }
         
         // Rate limiting between brands
@@ -507,6 +527,174 @@ async function fetchSydneyTools(fetchDetails = false) {
     }
     
     return allTools;
+}
+
+// Fetch The Tool Shed data
+async function fetchToolShed(fetchDetails = false) {
+    const config = STORE_CONFIG.toolshed;
+    
+    // First, get all categories from the power tools section
+    async function getCategories() {
+        const url = `${config.baseUrl}/category/1186-power-tools`;
+        const response = await fetchWithRetry(url);
+        const htmlContent = await response.text();
+        
+        const dom = new JSDOM(htmlContent);
+        const document = dom.window.document;
+        
+        const categoryLinks = document.querySelectorAll('#body .categories.level_1 .category.level_1 .name a');
+        const categories = [];
+        
+        for (const link of categoryLinks) {
+            const href = link.getAttribute('href');
+            const name = link.textContent.trim();
+            if (href && name) {
+                categories.push({
+                    name: name,
+                    url: href.startsWith('http') ? href : `${config.baseUrl}${href}`
+                });
+            }
+        }
+        
+        console.error(`[Tool Shed] Found ${categories.length} categories`);
+        return categories;
+    }
+    
+    // Fetch products from a category page
+    async function fetchCategoryProducts(categoryUrl, categoryName) {
+        const tools = [];
+        let page = 1;
+        
+        while (true) {
+            const url = page === 1 ? categoryUrl : `${categoryUrl}/${page}`;
+            console.error(`[Tool Shed] Fetching ${categoryName} page ${page}...`);
+            
+            try {
+                const response = await fetchWithRetry(url);
+                const htmlContent = await response.text();
+                
+                const dom = new JSDOM(htmlContent);
+                const document = dom.window.document;
+                
+                const productElements = document.querySelectorAll('#body .product-groups .product-group');
+                
+                if (productElements.length === 0) {
+                    console.error(`[Tool Shed] No products found on page ${page}`);
+                    break;
+                }
+                
+                for (const productElement of productElements) {
+                    const nameElement = productElement.querySelector('.name a');
+                    const modelElement = productElement.querySelector('.model');
+                    const photoElement = productElement.querySelector('.photo a');
+                    
+                    if (!nameElement || !photoElement) continue;
+                    
+                    const name = nameElement.textContent.trim();
+                    const modelNumber = modelElement ? modelElement.textContent.trim() : '';
+                    const productUrl = photoElement.getAttribute('href');
+                    const fullUrl = productUrl && productUrl.startsWith('http') ? productUrl : `${config.baseUrl}${productUrl}`;
+                    
+                    // Extract brand from product name
+                    const brand = extractBrandFromName(name);
+                    
+                    // Skip products that don't match our configured brands
+                    if (!brand) {
+                        continue;
+                    }
+                    
+                    // Get pricing information
+                    let priceRrp = '';
+                    let pricePromo = '';
+                    
+                    const priceOuterSpecial = productElement.querySelector('.price-outer.special');
+                    if (priceOuterSpecial) {
+                        // Product has a special price
+                        const retailValue = priceOuterSpecial.querySelector('.price.retail .retail-value');
+                        const specialValue = priceOuterSpecial.querySelector('.price.special .value');
+                        
+                        if (retailValue) {
+                            const retailMatch = retailValue.textContent.match(/\$([0-9,]+\.[0-9]+)/);
+                            priceRrp = retailMatch ? retailMatch[1].replace(/,/g, '') : '';
+                        }
+                        
+                        if (specialValue) {
+                            const specialMatch = specialValue.textContent.match(/\$([0-9,]+\.[0-9]+)/);
+                            pricePromo = specialMatch ? specialMatch[1].replace(/,/g, '') : '';
+                        }
+                    } else {
+                        // Product has standard pricing
+                        const standardPrice = productElement.querySelector('.price .value');
+                        if (standardPrice) {
+                            const priceMatch = standardPrice.textContent.match(/\$([0-9,]+\.[0-9]+)/);
+                            priceRrp = priceMatch ? priceMatch[1].replace(/,/g, '') : '';
+                        }
+                    }
+                    
+                    const toolData = createToolJson(brand, name, modelNumber, priceRrp, pricePromo, fullUrl, 'toolshed');
+                    tools.push(toolData);
+                }
+                
+                console.error(`[Tool Shed] Page ${page}: ${productElements.length} products found`);
+                page++;
+                
+                // Rate limiting
+                await sleep(500);
+                
+            } catch (error) {
+                console.error(`[Tool Shed] Error fetching page ${page}:`, error.message);
+                break;
+            }
+        }
+        
+        return tools;
+    }
+    
+    // Helper function to extract brand from product name
+    function extractBrandFromName(name) {
+        const nameLower = name.toLowerCase();
+        
+        // Only check configured brands - return null if not found
+        for (const brand of config.brands) {
+            if (nameLower.includes(brand.toLowerCase())) {
+                return brand;
+            }
+        }
+        
+        // Return null if no configured brand is found
+        return null;
+    }
+    
+    console.error('[Tool Shed] Fetching The Tool Shed data...');
+    
+    try {
+        const categories = await getCategories();
+        const allTools = [];
+        
+        for (const category of categories) {
+            console.error(`[Tool Shed] Processing category: ${category.name}`);
+            
+            try {
+                const categoryTools = await fetchCategoryProducts(category.url, category.name);
+                allTools.push(...categoryTools);
+                
+                console.error(`[Tool Shed] ${category.name}: ${categoryTools.length} tools found`);
+                
+                // Rate limiting between categories
+                await sleep(1000);
+                
+            } catch (error) {
+                console.error(`[Tool Shed] Error processing category ${category.name}:`, error.message);
+            }
+        }
+        
+        console.error(`[Tool Shed] The Tool Shed complete: ${allTools.length} items`);
+        return allTools;
+        
+    } catch (error) {
+        console.error('[Tool Shed] Error fetching The Tool Shed data:', error.message);
+        throw error;
+    }
 }
 
 // DOM helper functions
@@ -535,7 +723,7 @@ function parseBunningsProduct(htmlContent, originalData) {
         const jsonData = getNextDataJson(document);
         
         if (!jsonData) {
-            console.error(`    Error: No __NEXT_DATA__ script found`);
+            console.error(`[Bunnings] Error: No __NEXT_DATA__ script found`);
             return originalData;
         }
         
@@ -543,7 +731,7 @@ function parseBunningsProduct(htmlContent, originalData) {
         const productQuery = queries.find(query => query.queryKey?.[0] === 'retail-product');
         
         if (!productQuery) {
-            console.error(`    Warning: No retail-product query found`);
+            console.error(`[Bunnings] Warning: No retail-product query found`);
             return { ...originalData, modelNumber: null };
         }
         
@@ -552,12 +740,12 @@ function parseBunningsProduct(htmlContent, originalData) {
         const modelNumber = modelFeature?.featureValues?.[0]?.value || null;
         
         if (!modelNumber) {
-            console.error(`    Warning: Model number not found in product data`);
+            console.error(`[Bunnings] Warning: Model number not found in product data`);
         }
         
         return { ...originalData, modelNumber };
     } catch (error) {
-        console.error(`    Error parsing Bunnings product:`, error.message);
+        console.error(`[Bunnings] Error parsing Bunnings product:`, error.message);
         return { ...originalData, modelNumber: null };
     }
 }
@@ -577,12 +765,12 @@ function parseMitre10Product(htmlContent, originalData) {
             : null;
         
         if (!modelNumber) {
-            console.error(`    Warning: Model number not found in product data`);
+            console.error(`[Mitre10] Warning: Model number not found in product data`);
         }
         
         return { ...originalData, modelNumber };
     } catch (error) {
-        console.error(`    Error parsing Mitre10 product:`, error.message);
+        console.error(`[Mitre10] Error parsing Mitre10 product:`, error.message);
         return { ...originalData, modelNumber: null };
     }
 }
@@ -594,26 +782,26 @@ function parseSydneyToolsProduct(htmlContent, originalData) {
         const jsonData = getNextDataJson(document);
         
         if (!jsonData) {
-            console.error(`    Error: No __NEXT_DATA__ script found`);
+            console.error(`[Sydney Tools] Error: No __NEXT_DATA__ script found`);
             return originalData;
         }
         
         const productData = jsonData?.props?.pageProps?.productData;
         
         if (!productData) {
-            console.error(`    Warning: No product data found`);
+            console.error(`[Sydney Tools] Warning: No product data found`);
             return originalData;
         }
         
         const modelNumber = productData.modelNumber || null;
         
         if (!modelNumber) {
-            console.error(`    Warning: Model number not found in product data`);
+            console.error(`[Sydney Tools] Warning: Model number not found in product data`);
         }
         
         return { ...originalData, modelNumber };
     } catch (error) {
-        console.error(`    Error parsing Sydney Tools product:`, error.message);
+        console.error(`[Sydney Tools] Error parsing Sydney Tools product:`, error.message);
         return { ...originalData, modelNumber: null };
     }
 }
@@ -623,28 +811,29 @@ const STORE_FETCHERS = new Map([
     ['bunnings', fetchBunnings],
     ['mitre10', fetchMitre10],
     ['placemakers', fetchPlacemakers],
-    ['sydneytools', fetchSydneyTools]
+    ['sydneytools', fetchSydneyTools],
+    ['toolshed', fetchToolShed]
 ]);
 
 // Main function
 async function main() {
     const args = process.argv.slice(2);
     const store = args[0];
-    const fetchDetails = args.includes('--details');
+    const fetchDetails = true; // Always fetch details by default
     const sampleSize = args.includes('--sample') ? parseInt(args[args.indexOf('--sample') + 1]) || 10 : null;
     
     if (!store) {
-        console.error('Usage: node get-store-data.js <store> [--details] [--sample N]');
+        console.error('Usage: node get-store-data.js <store> [--sample N]');
         console.error(`Available stores: ${[...STORE_FETCHERS.keys()].join(', ')}`);
         console.error('Options:');
-        console.error('  --details     Fetch detailed product information (model numbers, etc.)');
         console.error('  --sample N    Process only first N tools (for testing)');
         console.error('');
         console.error('Examples:');
         console.error('  node get-store-data.js bunnings');
-        console.error('  node get-store-data.js mitre10 --details');
-        console.error('  node get-store-data.js placemakers --details --sample 5');
-        console.error('  node get-store-data.js sydneytools --details');
+        console.error('  node get-store-data.js mitre10');
+        console.error('  node get-store-data.js placemakers --sample 5');
+        console.error('  node get-store-data.js sydneytools');
+        console.error('  node get-store-data.js toolshed');
         process.exit(1);
     }
     
@@ -661,20 +850,20 @@ async function main() {
         
         // Apply sample size limit if specified
         if (sampleSize && tools.length > sampleSize) {
-            console.error(`Limiting to first ${sampleSize} tools (sample mode)`);
+            console.error(`[${STORE_CONFIG[store].name}] Limiting to first ${sampleSize} tools (sample mode)`);
             tools = tools.slice(0, sampleSize);
         }
         
         // Save to file
-        const outputFile = path.join(SCRIPT_DATA_DIR, `${store}_tools${fetchDetails ? '_detailed' : ''}${sampleSize ? '_sample' : ''}.json`);
+        const outputFile = path.join(SCRIPT_DATA_DIR, `${store}_tools_detailed${sampleSize ? '_sample' : ''}.json`);
         const outputContent = tools.map(tool => JSON.stringify(tool)).join('\n');
         await fs.writeFile(outputFile, outputContent);
         
-        console.error(`Data saved to: ${outputFile}`);
-        console.error(`Total tools: ${tools.length}`);
+        console.error(`[${STORE_CONFIG[store].name}] Data saved to: ${outputFile}`);
+        console.error(`[${STORE_CONFIG[store].name}] Total tools: ${tools.length}`);
         
     } catch (error) {
-        console.error('Error:', error.message);
+        console.error(`[${store ? STORE_CONFIG[store]?.name || store : 'Unknown'}] Error:`, error.message);
         process.exit(1);
     }
 }
