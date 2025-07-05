@@ -12,6 +12,7 @@
     "fetch:mitre10": "node ./scripts/get-store-data.js mitre10",
     "fetch:placemakers": "node ./scripts/get-store-data.js placemakers",
     "fetch:all": "npm run fetch:bunnings && npm run fetch:mitre10 && npm run fetch:placemakers",
+    "fetch:parallel": "parallel --line-buffer 'node ./scripts/get-store-data.js {}' ::: bunnings mitre10 placemakers sydneytools toolshed",
     "fetch:details": "node ./scripts/get-store-data.js",
     "fetch:sample": "node ./scripts/get-store-data.js placemakers --sample 5"
   },
