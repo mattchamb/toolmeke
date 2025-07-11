@@ -4,6 +4,9 @@ on:
   push:
     branches: [ master ]
   workflow_dispatch:
+  schedule:
+    # Run daily at 2 AM UTC (fetch data and deploy)
+    - cron: '0 2 * * *'
 
 permissions:
   contents: read
@@ -16,6 +19,31 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y parallel jq
+      
+      - name: Fetch latest tool data
+        run: npm run fetch:parallel
+        
+      - name: Process and combine tool data
+        run: |
+          # Combine all store data files
+          ./scripts/combine-store-data.sh ./src/data/tools.json ./scripts/data/*_tools_detailed.json
+          # Process the combined data
+          ./scripts/process-tools-simple.sh ./src/data/tools.json > ./src/data/processed_tools.json
+          # Replace the original with processed data
+          mv ./src/data/processed_tools.json ./src/data/tools.json
+      
       - name: Install, build, and upload your site
         uses: withastro/action@v3
 
