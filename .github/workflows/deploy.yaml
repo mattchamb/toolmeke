@@ -32,18 +32,6 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y parallel jq
       
-      - name: Fetch latest tool data
-        run: npm run fetch:parallel
-        
-      - name: Process and combine tool data
-        run: |
-          # Combine all store data files
-          ./scripts/combine-store-data.sh ./src/data/tools.json ./scripts/data/*_tools_detailed.json
-          # Process the combined data
-          ./scripts/process-tools-simple.sh ./src/data/tools.json > ./src/data/processed_tools.json
-          # Replace the original with processed data
-          mv ./src/data/processed_tools.json ./src/data/tools.json
-      
       - name: Install, build, and upload your site
         uses: withastro/action@v3
 
